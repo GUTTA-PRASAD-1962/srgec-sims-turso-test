@@ -227,6 +227,60 @@ def show_users(module_code):
                             st.rerun()
                         except Exception as ex: st.error(str(ex)); conn.close()
 
+                st.markdown("---")
+                st.markdown("#### 🗑 Delete / Deactivate User")
+                if eu["user_id"] == user.get("user_id"):
+                    st.warning("You cannot delete or deactivate your own account.")
+                else:
+                    st.caption(
+                        "**Deactivate** disables login but keeps history (recommended). "
+                        "**Delete** permanently removes the user record and ALL their "
+                        "module access — only possible if no audit/asset records "
+                        "reference this user."
+                    )
+                    dcol1, dcol2 = st.columns(2)
+
+                    if eu["is_active"]:
+                        if dcol1.button("🚫 Deactivate User", key=f"{mid}_deact_user"):
+                            conn = get_conn()
+                            conn.execute("UPDATE tbl_users SET is_active=0 WHERE user_id=?",
+                                         (eu["user_id"],))
+                            conn.commit(); conn.close()
+                            st.success(f"User '{eu['username']}' deactivated.")
+                            st.rerun()
+                    else:
+                        if dcol1.button("✅ Reactivate User", key=f"{mid}_react_user"):
+                            conn = get_conn()
+                            conn.execute("UPDATE tbl_users SET is_active=1 WHERE user_id=?",
+                                         (eu["user_id"],))
+                            conn.commit(); conn.close()
+                            st.success(f"User '{eu['username']}' reactivated.")
+                            st.rerun()
+
+                    confirm_del = dcol2.checkbox(
+                        f"I confirm permanent deletion of '{eu['username']}'",
+                        key=f"{mid}_confirm_del_user"
+                    )
+                    if dcol2.button("🗑️ Delete Permanently", type="primary",
+                                    key=f"{mid}_del_user", disabled=not confirm_del):
+                        conn = get_conn()
+                        try:
+                            conn.execute("DELETE FROM tbl_user_module_access WHERE user_id=?",
+                                         (eu["user_id"],))
+                            conn.execute("DELETE FROM tbl_users WHERE user_id=?",
+                                         (eu["user_id"],))
+                            conn.commit(); conn.close()
+                            st.success(f"User '{eu['username']}' permanently deleted.")
+                            del st.session_state[f"edit_uid_{mid}"]
+                            st.rerun()
+                        except Exception as ex:
+                            conn.close()
+                            st.error(
+                                f"Cannot delete: {ex}. This user likely has "
+                                "linked records (assets, audit logs, complaints). "
+                                "Use **Deactivate** instead."
+                            )
+
     with tab2:
         depts = [dict(r) for r in _fa("SELECT * FROM tbl_departments WHERE is_active=1 ORDER BY dept_name")]
         dm    = {"(None)": None}; dm.update({d["dept_name"]: d["dept_id"] for d in depts})

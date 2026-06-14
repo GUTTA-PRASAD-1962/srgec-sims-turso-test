@@ -19,7 +19,7 @@ TURSO_TOKEN = os.environ.get("TURSO_AUTH_TOKEN")
 USE_TURSO = bool(TURSO_URL and TURSO_TOKEN)
 
 if USE_TURSO:
-    import libsql
+    import libsql_experimental as libsql
 
 
 def get_conn():

@@ -18,23 +18,76 @@ def format_currency(amount):
 
 
 def generate_item_id(module_code, dept_code, type_prefix, purchase_date):
+    """
+    Generate the next sequential Unique Item ID using the
+    SuperAdmin-configurable format (tbl_uid_format_config).
+    Falls back to default format: MOD_DEPT_MM_YYYY_TYPE_NNNNN if no config exists.
+    """
     from db.connection import fetchone
     try:
         dt = datetime.strptime(str(purchase_date)[:10], "%Y-%m-%d")
         mm = dt.strftime("%m"); yyyy = dt.strftime("%Y")
     except:
         mm = datetime.now().strftime("%m"); yyyy = datetime.now().strftime("%Y")
-    pattern = f"{module_code}_{dept_code}_{mm}_{yyyy}_{type_prefix}_%"
+
+    safe_mod  = str(module_code).upper().replace(" ", "")
+    safe_dept = str(dept_code).upper().replace(" ", "")
+    safe_type = str(type_prefix).upper().replace(" ", "")
+
+    try:
+        cfg = fetchone(
+            "SELECT * FROM tbl_uid_format_config WHERE is_active=1 "
+            "ORDER BY config_id DESC LIMIT 1"
+        )
+    except Exception:
+        cfg = None
+
+    if cfg:
+        cfg = dict(cfg)
+        components = cfg["components"].split(",")
+        separator  = cfg["separator"] or ""
+        seq_digits = cfg["seq_digits"]
+    else:
+        components = ["MOD","DEPT","MM","YYYY","TYPE","SEQ"]
+        separator  = "_"
+        seq_digits = 5
+
+    value_map = {
+        "MOD":  safe_mod,
+        "DEPT": safe_dept,
+        "MM":   mm,
+        "YYYY": yyyy,
+        "TYPE": safe_type,
+    }
+
+    prefix_parts = [value_map.get(c, c) for c in components if c != "SEQ"]
+    prefix = separator.join(prefix_parts)
+    if "SEQ" in components and prefix:
+        prefix = prefix + separator
+
     row = fetchone(
-        "SELECT unique_item_id FROM tbl_items WHERE unique_item_id LIKE ? ORDER BY item_id DESC LIMIT 1",
-        (pattern,)
+        "SELECT unique_item_id FROM tbl_items WHERE unique_item_id LIKE ? "
+        "ORDER BY item_id DESC LIMIT 1",
+        (f"{prefix}%",)
     )
     if row:
-        try: seq = int(dict(row)["unique_item_id"].split("_")[-1]) + 1
-        except: seq = 1
+        try:
+            tail = str(dict(row)["unique_item_id"])[len(prefix):]
+            seq = int(tail) + 1
+        except (ValueError, IndexError):
+            seq = 1
     else:
         seq = 1
-    return f"{module_code}_{dept_code}_{mm}_{yyyy}_{type_prefix}_{seq:05d}"
+
+    seq_str = str(seq).zfill(seq_digits)
+
+    final_parts = []
+    for c in components:
+        if c == "SEQ":
+            final_parts.append(seq_str)
+        else:
+            final_parts.append(value_map.get(c, c))
+    return separator.join(final_parts)
 
 
 def save_scan(file, prefix=""):

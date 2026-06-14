@@ -127,6 +127,8 @@ def _render_module_sidebar(module_code, mod, role):
             pnav("🏭  Suppliers",             "admin_suppliers","Administration — Suppliers")
             pnav("🔐  Role & Privileges",     "admin_matrix",  "Administration — Role & Privileges")
             pnav("📜  Audit Log",             "admin_audit",   "Administration — Audit Log")
+            if user.get("is_super_admin"):
+                pnav("🆔  Asset UID Format",      "admin_uidfmt",  "Administration — UID Format")
 
         sec("👤", "Account", "#B0BEC5")
         pnav("🔔  Notifications",         "notifications", "Account — Notifications")
@@ -154,14 +156,13 @@ def _route(subpage, module_code, mod, role, user):
             (st.success if t == "s" else st.error)(msg)
         is_admin = role in ("SuperAdmin","SysAdmin","Coordinator")
         if is_admin:
-            tab1,tab2,tab3,tab4,tab5,tab6,tab7,tab8 = st.tabs([
+            tab1,tab2,tab3,tab4,tab5,tab6,tab7 = st.tabs([
                 "➕ New Procurement Entry",
                 "📥 Bulk Upload",
                 "🔀 Issue to Department",
                 "📋 View Central Stock",
                 "🔍 Asset Detail Search",
                 "✏️ Edit / Delete Entries",
-                "📊 Category Summary",
                 "🏢 Dept-wise View",
             ])
             with tab1: _new_entry(user, role, m)
@@ -170,13 +171,11 @@ def _route(subpage, module_code, mod, role, user):
             with tab4: _view_stock(m)
             with tab5: _asset_search(m)
             with tab6: _edit_delete(user, m)
-            with tab7: _category_summary(m, mid)
-            with tab8: _dept_view(m)
+            with tab7: _dept_view(m)
         else:
-            tab1,tab2,tab3 = st.tabs(["📋 View Central Stock","🔍 Asset Search","📊 Category Summary"])
+            tab1,tab2 = st.tabs(["📋 View Central Stock","🔍 Asset Search"])
             with tab1: _view_stock(m)
             with tab2: _asset_search(m)
-            with tab3: _category_summary(m, mid)
 
     elif subpage == "dept_stock":
         from pages.common_stock import _dept_stock, _dept_view, _new_dept_entry, _get_module
@@ -185,16 +184,18 @@ def _route(subpage, module_code, mod, role, user):
         if st.session_state.get("_stock_msg"):
             t, msg = st.session_state.pop("_stock_msg")
             (st.success if t == "s" else st.error)(msg)
-        tab1,tab2,tab3,tab4 = st.tabs([
+        tab1,tab2,tab3,tab4,tab5 = st.tabs([
             "📋 Stock Register",
             "📦 All Assets in Dept",
+            "📊 Category Summary",
             "➕ Manual Department Entry",
             "🏷 Assign to Lab",
         ])
         with tab1: _dept_stock(m)
         with tab2: _dept_view(m)
-        with tab3: _new_dept_entry(user, role, m)
-        with tab4: _assign_to_lab_sims(m, mid, user, role)
+        with tab3: _category_summary(m, mid)
+        with tab4: _new_dept_entry(user, role, m)
+        with tab5: _assign_to_lab_sims(m, mid, user, role)
 
     # ── Procurement — each sidebar item = dedicated page like IT-IIMS
     elif subpage == "proc_forward":
@@ -336,6 +337,10 @@ def _route(subpage, module_code, mod, role, user):
         from pages.common_admin import show_audit
         st.title("📜 Audit Log")
         show_audit(mc)
+
+    elif subpage == "admin_uidfmt":
+        from pages.uid_format import show as uidfmt_show
+        uidfmt_show(mc)
 
     # ── Account ────────────────────────────────────────────────────
     elif subpage == "notifications":

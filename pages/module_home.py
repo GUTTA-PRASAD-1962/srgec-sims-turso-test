@@ -127,8 +127,6 @@ def _render_module_sidebar(module_code, mod, role):
             pnav("🏭  Suppliers",             "admin_suppliers","Administration — Suppliers")
             pnav("🔐  Role & Privileges",     "admin_matrix",  "Administration — Role & Privileges")
             pnav("📜  Audit Log",             "admin_audit",   "Administration — Audit Log")
-            if user.get("is_super_admin"):
-                pnav("🆔  Asset UID Format",      "admin_uidfmt",  "Administration — UID Format")
 
         sec("👤", "Account", "#B0BEC5")
         pnav("🔔  Notifications",         "notifications", "Account — Notifications")
@@ -337,10 +335,6 @@ def _route(subpage, module_code, mod, role, user):
         from pages.common_admin import show_audit
         st.title("📜 Audit Log")
         show_audit(mc)
-
-    elif subpage == "admin_uidfmt":
-        from pages.uid_format import show as uidfmt_show
-        uidfmt_show(mc)
 
     # ── Account ────────────────────────────────────────────────────
     elif subpage == "notifications":
@@ -760,8 +754,8 @@ def _category_summary(mod, mid):
     rows = [dict(r) for r in _fa("""
         SELECT it.type_name,
                COUNT(*) AS total,
-               SUM(CASE WHEN i.item_status="WORKING" THEN 1 ELSE 0 END) AS working,
-               SUM(CASE WHEN i.item_status!="WORKING" THEN 1 ELSE 0 END) AS faulty,
+               SUM(CASE WHEN i.item_status='WORKING' THEN 1 ELSE 0 END) AS working,
+               SUM(CASE WHEN i.item_status!='WORKING' THEN 1 ELSE 0 END) AS faulty,
                SUM(i.cost_per_unit) AS total_value
         FROM tbl_items i
         JOIN tbl_item_types it ON it.type_id=i.type_id

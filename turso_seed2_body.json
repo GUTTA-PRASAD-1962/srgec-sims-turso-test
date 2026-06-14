@@ -1,0 +1,775 @@
+{
+  "requests": [
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_modules (module_code,module_name,module_icon,module_color,has_maintenance,sort_order) VALUES ('IT','IT Infrastructure (IIMS)','\ud83d\udcbb','#1B4F9A',1,1);"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_modules (module_code,module_name,module_icon,module_color,has_maintenance,sort_order) VALUES ('UPS','UPS Management','\u26a1','#E65100',1,2);"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_modules (module_code,module_name,module_icon,module_color,has_maintenance,sort_order) VALUES ('ELEC','Electrical Maintenance','\ud83d\udd0c','#F57F17',1,3);"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_modules (module_code,module_name,module_icon,module_color,has_maintenance,sort_order) VALUES ('CIVIL','Civil Infrastructure','\ud83c\udfd7','#2E7D32',1,4);"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_modules (module_code,module_name,module_icon,module_color,has_maintenance,sort_order) VALUES ('FURN','Furniture Management','\ud83e\ude91','#6A1B9A',1,5);"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_modules (module_code,module_name,module_icon,module_color,has_maintenance,sort_order) VALUES ('STAT','Stationery Management','\ud83d\udcdd','#00838F',0,6);"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_modules (module_code,module_name,module_icon,module_color,has_maintenance,sort_order) VALUES ('LCD','LCD Projector Management','\ud83d\udcfd','#AD1457',1,7);"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_modules (module_code,module_name,module_icon,module_color,has_maintenance,sort_order) VALUES ('CCTV','CC Camera Management','\ud83d\udcf7','#37474F',1,8);"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_departments (dept_name,dept_code) VALUES ('Computer Science & Engineering','CSE');"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_departments (dept_name,dept_code) VALUES ('Electrical & Electronics Engineering','EEE');"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_departments (dept_name,dept_code) VALUES ('Electronics & Communication Engineering','ECE');"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_departments (dept_name,dept_code) VALUES ('Civil Engineering','CIVIL');"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_departments (dept_name,dept_code) VALUES ('Mechanical Engineering','MECH');"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_departments (dept_name,dept_code) VALUES ('Information Technology','IT');"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_departments (dept_name,dept_code) VALUES ('Artificial Intelligence & Data Science','AIDS');"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_departments (dept_name,dept_code) VALUES ('Administration','ADMIN');"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_departments (dept_name,dept_code) VALUES ('Library','LIB');"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_user_module_access (user_id,module_id,role_name,is_active,granted_at) SELECT (SELECT user_id FROM tbl_users WHERE username='superadmin'), (SELECT module_id FROM tbl_modules WHERE module_code='IT'), 'SuperAdmin',1,datetime('now','localtime');"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_user_module_access (user_id,module_id,role_name,is_active,granted_at) SELECT (SELECT user_id FROM tbl_users WHERE username='superadmin'), (SELECT module_id FROM tbl_modules WHERE module_code='UPS'), 'SuperAdmin',1,datetime('now','localtime');"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_user_module_access (user_id,module_id,role_name,is_active,granted_at) SELECT (SELECT user_id FROM tbl_users WHERE username='superadmin'), (SELECT module_id FROM tbl_modules WHERE module_code='ELEC'), 'SuperAdmin',1,datetime('now','localtime');"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_user_module_access (user_id,module_id,role_name,is_active,granted_at) SELECT (SELECT user_id FROM tbl_users WHERE username='superadmin'), (SELECT module_id FROM tbl_modules WHERE module_code='CIVIL'), 'SuperAdmin',1,datetime('now','localtime');"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_user_module_access (user_id,module_id,role_name,is_active,granted_at) SELECT (SELECT user_id FROM tbl_users WHERE username='superadmin'), (SELECT module_id FROM tbl_modules WHERE module_code='FURN'), 'SuperAdmin',1,datetime('now','localtime');"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_user_module_access (user_id,module_id,role_name,is_active,granted_at) SELECT (SELECT user_id FROM tbl_users WHERE username='superadmin'), (SELECT module_id FROM tbl_modules WHERE module_code='STAT'), 'SuperAdmin',1,datetime('now','localtime');"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_user_module_access (user_id,module_id,role_name,is_active,granted_at) SELECT (SELECT user_id FROM tbl_users WHERE username='superadmin'), (SELECT module_id FROM tbl_modules WHERE module_code='LCD'), 'SuperAdmin',1,datetime('now','localtime');"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_user_module_access (user_id,module_id,role_name,is_active,granted_at) SELECT (SELECT user_id FROM tbl_users WHERE username='superadmin'), (SELECT module_id FROM tbl_modules WHERE module_code='CCTV'), 'SuperAdmin',1,datetime('now','localtime');"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'CPU','CPU','CPU',1 FROM tbl_modules WHERE module_code='IT';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'Printer','PRN','PRN',0 FROM tbl_modules WHERE module_code='IT';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'Scanner','SCN','SCN',0 FROM tbl_modules WHERE module_code='IT';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'Switch','SWT','SWT',1 FROM tbl_modules WHERE module_code='IT';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'Server','SRV','SRV',1 FROM tbl_modules WHERE module_code='IT';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'UPS Unit','UPS','UPS',1 FROM tbl_modules WHERE module_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'Battery Bank','BAT','BAT',1 FROM tbl_modules WHERE module_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'Inverter','INV','INV',1 FROM tbl_modules WHERE module_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'Generator','GEN','GEN',1 FROM tbl_modules WHERE module_code='ELEC';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'Transformer','TRF','TRF',1 FROM tbl_modules WHERE module_code='ELEC';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'Distribution Board','DB','DB',1 FROM tbl_modules WHERE module_code='ELEC';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'Stabilizer','STB','STB',1 FROM tbl_modules WHERE module_code='ELEC';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'Building/Block','BLD','BLD',0 FROM tbl_modules WHERE module_code='CIVIL';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'Plumbing','PLB','PLB',0 FROM tbl_modules WHERE module_code='CIVIL';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'Flooring','FLR','FLR',0 FROM tbl_modules WHERE module_code='CIVIL';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'Chair','CHR','CHR',0 FROM tbl_modules WHERE module_code='FURN';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'Table/Desk','TBL','TBL',0 FROM tbl_modules WHERE module_code='FURN';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'Almirah','ALM','ALM',0 FROM tbl_modules WHERE module_code='FURN';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'Bench','BNC','BNC',0 FROM tbl_modules WHERE module_code='FURN';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'LCD Projector','LCD','LCD',1 FROM tbl_modules WHERE module_code='LCD';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'Projection Screen','SCR','SCR',0 FROM tbl_modules WHERE module_code='LCD';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'IP Camera','CAM','CAM',1 FROM tbl_modules WHERE module_code='CCTV';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'DVR/NVR','DVR','DVR',1 FROM tbl_modules WHERE module_code='CCTV';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_item_types (module_id,type_name,type_code,id_prefix,has_config) SELECT module_id,'Monitor','MON','MON',0 FROM tbl_modules WHERE module_code='CCTV';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_field_defs (type_id,field_name,field_label,field_type,is_required,is_config_field,placeholder,sort_order) SELECT type_id,'kva_rating','KVA Rating','number',1,1,'e.g. 5',0 FROM tbl_item_types WHERE type_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_field_defs (type_id,field_name,field_label,field_type,is_required,is_config_field,placeholder,sort_order) SELECT type_id,'va_capacity','VA Capacity','number',0,1,'e.g. 5000',1 FROM tbl_item_types WHERE type_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_field_defs (type_id,field_name,field_label,field_type,is_required,is_config_field,placeholder,sort_order) SELECT type_id,'input_voltage','Input Voltage Range','text',0,1,'e.g. 160-260V',2 FROM tbl_item_types WHERE type_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_field_defs (type_id,field_name,field_label,field_type,is_required,is_config_field,placeholder,sort_order) SELECT type_id,'output_voltage','Output Voltage','text',0,1,'e.g. 230V',3 FROM tbl_item_types WHERE type_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_field_defs (type_id,field_name,field_label,field_type,is_required,is_config_field,placeholder,sort_order) SELECT type_id,'battery_count','Number of Batteries','number',1,0,'e.g. 4',4 FROM tbl_item_types WHERE type_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_field_defs (type_id,field_name,field_label,field_type,is_required,is_config_field,placeholder,sort_order) SELECT type_id,'battery_make','Battery Make','text',0,0,'e.g. Exide',5 FROM tbl_item_types WHERE type_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_field_defs (type_id,field_name,field_label,field_type,is_required,is_config_field,placeholder,sort_order) SELECT type_id,'battery_ah','Battery AH Rating','number',0,0,'e.g. 42',6 FROM tbl_item_types WHERE type_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_field_defs (type_id,field_name,field_label,field_type,is_required,is_config_field,placeholder,sort_order) SELECT type_id,'backup_time','Backup Time (minutes)','number',0,0,'e.g. 30',7 FROM tbl_item_types WHERE type_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_field_defs (type_id,field_name,field_label,field_type,is_required,is_config_field,placeholder,sort_order) SELECT type_id,'inverter_make','Inverter Make','text',0,0,'',8 FROM tbl_item_types WHERE type_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_field_defs (type_id,field_name,field_label,field_type,is_required,is_config_field,placeholder,sort_order) SELECT type_id,'last_service','Last Service Date','date',0,0,'',9 FROM tbl_item_types WHERE type_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_field_defs (type_id,field_name,field_label,field_type,is_required,is_config_field,placeholder,sort_order) SELECT type_id,'amc_vendor','AMC Vendor','text',0,0,'',10 FROM tbl_item_types WHERE type_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_field_defs (type_id,field_name,field_label,field_type,is_required,is_config_field,placeholder,sort_order) SELECT type_id,'amc_from','AMC From','date',0,0,'',11 FROM tbl_item_types WHERE type_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_field_defs (type_id,field_name,field_label,field_type,is_required,is_config_field,placeholder,sort_order) SELECT type_id,'amc_to','AMC To','date',0,0,'',12 FROM tbl_item_types WHERE type_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'OPEN','UNDER REVIEW','Forward to Coordinator','HoD,Coordinator,SysAdmin',1,0,0 FROM tbl_modules WHERE module_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'UNDER REVIEW','ASSIGNED','Assign to Technician','SysAdmin,Coordinator',1,1,1 FROM tbl_modules WHERE module_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'ASSIGNED','UNDER REPAIR','Start Repair / Service','Technician',1,0,2 FROM tbl_modules WHERE module_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'ASSIGNED','PARTS NEEDED','Parts Required \u2014 Raise Indent','Technician',1,0,3 FROM tbl_modules WHERE module_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'PARTS NEEDED','PARTS ORDERED','Authorise & Order Parts','SysAdmin,Coordinator',1,0,4 FROM tbl_modules WHERE module_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'PARTS ORDERED','UNDER REPAIR','Parts Received \u2014 Hand Over','SysAdmin',1,0,5 FROM tbl_modules WHERE module_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'UNDER REPAIR','REPAIRED','Service / Repair Complete','Technician',1,0,6 FROM tbl_modules WHERE module_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'REPAIRED','VERIFIED','Verify \u2014 Working Correctly','Lab-IC,User',1,0,7 FROM tbl_modules WHERE module_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'VERIFIED','CLOSED','Acknowledge & Forward','HoD',1,0,8 FROM tbl_modules WHERE module_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'CLOSED','FILE CLOSED','Close File','SysAdmin',1,0,9 FROM tbl_modules WHERE module_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'OPEN','REJECTED','Reject Complaint','SysAdmin,Coordinator',1,0,10 FROM tbl_modules WHERE module_code='UPS';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'OPEN','UNDER REVIEW','Forward to Coordinator','HoD,Coordinator,SysAdmin',1,0,0 FROM tbl_modules WHERE module_code='ELEC';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'UNDER REVIEW','ASSIGNED','Assign to Technician','SysAdmin,Coordinator',1,1,1 FROM tbl_modules WHERE module_code='ELEC';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'ASSIGNED','UNDER REPAIR','Start Repair / Service','Technician',1,0,2 FROM tbl_modules WHERE module_code='ELEC';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'ASSIGNED','PARTS NEEDED','Parts Required \u2014 Raise Indent','Technician',1,0,3 FROM tbl_modules WHERE module_code='ELEC';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'PARTS NEEDED','PARTS ORDERED','Authorise & Order Parts','SysAdmin,Coordinator',1,0,4 FROM tbl_modules WHERE module_code='ELEC';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'PARTS ORDERED','UNDER REPAIR','Parts Received \u2014 Hand Over','SysAdmin',1,0,5 FROM tbl_modules WHERE module_code='ELEC';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'UNDER REPAIR','REPAIRED','Service / Repair Complete','Technician',1,0,6 FROM tbl_modules WHERE module_code='ELEC';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'REPAIRED','VERIFIED','Verify \u2014 Working Correctly','Lab-IC,User',1,0,7 FROM tbl_modules WHERE module_code='ELEC';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'VERIFIED','CLOSED','Acknowledge & Forward','HoD',1,0,8 FROM tbl_modules WHERE module_code='ELEC';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'CLOSED','FILE CLOSED','Close File','SysAdmin',1,0,9 FROM tbl_modules WHERE module_code='ELEC';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'OPEN','REJECTED','Reject Complaint','SysAdmin,Coordinator',1,0,10 FROM tbl_modules WHERE module_code='ELEC';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'OPEN','UNDER REVIEW','Forward to Coordinator','HoD,Coordinator,SysAdmin',1,0,0 FROM tbl_modules WHERE module_code='CIVIL';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'UNDER REVIEW','ASSIGNED','Assign to Technician','SysAdmin,Coordinator',1,1,1 FROM tbl_modules WHERE module_code='CIVIL';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'ASSIGNED','UNDER REPAIR','Start Repair / Service','Technician',1,0,2 FROM tbl_modules WHERE module_code='CIVIL';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'ASSIGNED','PARTS NEEDED','Parts Required \u2014 Raise Indent','Technician',1,0,3 FROM tbl_modules WHERE module_code='CIVIL';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'PARTS NEEDED','PARTS ORDERED','Authorise & Order Parts','SysAdmin,Coordinator',1,0,4 FROM tbl_modules WHERE module_code='CIVIL';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'PARTS ORDERED','UNDER REPAIR','Parts Received \u2014 Hand Over','SysAdmin',1,0,5 FROM tbl_modules WHERE module_code='CIVIL';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'UNDER REPAIR','REPAIRED','Service / Repair Complete','Technician',1,0,6 FROM tbl_modules WHERE module_code='CIVIL';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'REPAIRED','VERIFIED','Verify \u2014 Working Correctly','Lab-IC,User',1,0,7 FROM tbl_modules WHERE module_code='CIVIL';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'VERIFIED','CLOSED','Acknowledge & Forward','HoD',1,0,8 FROM tbl_modules WHERE module_code='CIVIL';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'CLOSED','FILE CLOSED','Close File','SysAdmin',1,0,9 FROM tbl_modules WHERE module_code='CIVIL';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'OPEN','REJECTED','Reject Complaint','SysAdmin,Coordinator',1,0,10 FROM tbl_modules WHERE module_code='CIVIL';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'OPEN','UNDER REVIEW','Forward to Coordinator','HoD,Coordinator,SysAdmin',1,0,0 FROM tbl_modules WHERE module_code='FURN';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'UNDER REVIEW','ASSIGNED','Assign to Technician','SysAdmin,Coordinator',1,1,1 FROM tbl_modules WHERE module_code='FURN';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'ASSIGNED','UNDER REPAIR','Start Repair / Service','Technician',1,0,2 FROM tbl_modules WHERE module_code='FURN';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'ASSIGNED','PARTS NEEDED','Parts Required \u2014 Raise Indent','Technician',1,0,3 FROM tbl_modules WHERE module_code='FURN';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'PARTS NEEDED','PARTS ORDERED','Authorise & Order Parts','SysAdmin,Coordinator',1,0,4 FROM tbl_modules WHERE module_code='FURN';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'PARTS ORDERED','UNDER REPAIR','Parts Received \u2014 Hand Over','SysAdmin',1,0,5 FROM tbl_modules WHERE module_code='FURN';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'UNDER REPAIR','REPAIRED','Service / Repair Complete','Technician',1,0,6 FROM tbl_modules WHERE module_code='FURN';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'REPAIRED','VERIFIED','Verify \u2014 Working Correctly','Lab-IC,User',1,0,7 FROM tbl_modules WHERE module_code='FURN';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'VERIFIED','CLOSED','Acknowledge & Forward','HoD',1,0,8 FROM tbl_modules WHERE module_code='FURN';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'CLOSED','FILE CLOSED','Close File','SysAdmin',1,0,9 FROM tbl_modules WHERE module_code='FURN';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'OPEN','REJECTED','Reject Complaint','SysAdmin,Coordinator',1,0,10 FROM tbl_modules WHERE module_code='FURN';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'OPEN','UNDER REVIEW','Forward to Coordinator','HoD,Coordinator,SysAdmin',1,0,0 FROM tbl_modules WHERE module_code='LCD';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'UNDER REVIEW','ASSIGNED','Assign to Technician','SysAdmin,Coordinator',1,1,1 FROM tbl_modules WHERE module_code='LCD';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'ASSIGNED','UNDER REPAIR','Start Repair / Service','Technician',1,0,2 FROM tbl_modules WHERE module_code='LCD';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'ASSIGNED','PARTS NEEDED','Parts Required \u2014 Raise Indent','Technician',1,0,3 FROM tbl_modules WHERE module_code='LCD';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'PARTS NEEDED','PARTS ORDERED','Authorise & Order Parts','SysAdmin,Coordinator',1,0,4 FROM tbl_modules WHERE module_code='LCD';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'PARTS ORDERED','UNDER REPAIR','Parts Received \u2014 Hand Over','SysAdmin',1,0,5 FROM tbl_modules WHERE module_code='LCD';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'UNDER REPAIR','REPAIRED','Service / Repair Complete','Technician',1,0,6 FROM tbl_modules WHERE module_code='LCD';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'REPAIRED','VERIFIED','Verify \u2014 Working Correctly','Lab-IC,User',1,0,7 FROM tbl_modules WHERE module_code='LCD';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'VERIFIED','CLOSED','Acknowledge & Forward','HoD',1,0,8 FROM tbl_modules WHERE module_code='LCD';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'CLOSED','FILE CLOSED','Close File','SysAdmin',1,0,9 FROM tbl_modules WHERE module_code='LCD';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'OPEN','REJECTED','Reject Complaint','SysAdmin,Coordinator',1,0,10 FROM tbl_modules WHERE module_code='LCD';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'OPEN','UNDER REVIEW','Forward to Coordinator','HoD,Coordinator,SysAdmin',1,0,0 FROM tbl_modules WHERE module_code='CCTV';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'UNDER REVIEW','ASSIGNED','Assign to Technician','SysAdmin,Coordinator',1,1,1 FROM tbl_modules WHERE module_code='CCTV';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'ASSIGNED','UNDER REPAIR','Start Repair / Service','Technician',1,0,2 FROM tbl_modules WHERE module_code='CCTV';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'ASSIGNED','PARTS NEEDED','Parts Required \u2014 Raise Indent','Technician',1,0,3 FROM tbl_modules WHERE module_code='CCTV';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'PARTS NEEDED','PARTS ORDERED','Authorise & Order Parts','SysAdmin,Coordinator',1,0,4 FROM tbl_modules WHERE module_code='CCTV';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'PARTS ORDERED','UNDER REPAIR','Parts Received \u2014 Hand Over','SysAdmin',1,0,5 FROM tbl_modules WHERE module_code='CCTV';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'UNDER REPAIR','REPAIRED','Service / Repair Complete','Technician',1,0,6 FROM tbl_modules WHERE module_code='CCTV';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'REPAIRED','VERIFIED','Verify \u2014 Working Correctly','Lab-IC,User',1,0,7 FROM tbl_modules WHERE module_code='CCTV';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'VERIFIED','CLOSED','Acknowledge & Forward','HoD',1,0,8 FROM tbl_modules WHERE module_code='CCTV';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'CLOSED','FILE CLOSED','Close File','SysAdmin',1,0,9 FROM tbl_modules WHERE module_code='CCTV';"
+      }
+    },
+    {
+      "type": "execute",
+      "stmt": {
+        "sql": "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) SELECT module_id,'OPEN','REJECTED','Reject Complaint','SysAdmin,Coordinator',1,0,10 FROM tbl_modules WHERE module_code='CCTV';"
+      }
+    },
+    {
+      "type": "close"
+    }
+  ]
+}

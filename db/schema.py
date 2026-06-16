@@ -223,6 +223,7 @@ CREATE TABLE IF NOT EXISTS tbl_spare_indent (
     source        TEXT,
     authorized_by INTEGER REFERENCES tbl_users(user_id),
     authorized_at TEXT,
+    procured_at   TEXT,
     indent_status TEXT DEFAULT 'PENDING'
         CHECK(indent_status IN ('PENDING','AUTHORIZED','PROCURED','CANCELLED')),
     created_at    TEXT DEFAULT (datetime('now','localtime'))

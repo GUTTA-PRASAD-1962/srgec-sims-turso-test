@@ -349,25 +349,34 @@ def show_users(module_code):
 
 def show_depts(module_code):
     """🏫 Dept & Lab Setup"""
+    from utils.auth import current_user
+    user = current_user()
+    is_superadmin = bool(int(user.get("is_super_admin") or 0))
+ 
     depts = [dict(r) for r in _fa("SELECT * FROM tbl_departments WHERE is_active=1 ORDER BY dept_name")]
     if depts:
         st.dataframe(pd.DataFrame([{
             "ID":d["dept_id"],"Name":d["dept_name"],"Code":d["dept_code"]
         } for d in depts]), use_container_width=True, hide_index=True)
-
     st.divider()
-    st.markdown("**Add Department**")
-    d1,d2 = st.columns(2)
-    dn=d1.text_input("Dept Name *",key="new_dept_n"); dc=d2.text_input("Dept Code *",key="new_dept_c")
-    if st.button("➕ Add Dept", key="new_dept_save"):
-        if dn and dc:
-            conn=get_conn()
-            try:
-                conn.execute("INSERT INTO tbl_departments (dept_name,dept_code) VALUES (?,?)",(dn,dc.upper()))
-                conn.commit(); st.success(f"Dept '{dn}' added."); st.rerun()
-            except Exception as ex: st.error(str(ex))
-            finally: conn.close()
-
+ 
+    if is_superadmin:
+        st.markdown("**Add Department**")
+        d1,d2 = st.columns(2)
+        dn=d1.text_input("Dept Name *",key="new_dept_n"); dc=d2.text_input("Dept Code *",key="new_dept_c")
+        if st.button("➕ Add Dept", key="new_dept_save"):
+            if dn and dc:
+                conn=get_conn()
+                try:
+                    conn.execute("INSERT INTO tbl_departments (dept_name,dept_code) VALUES (?,?)",(dn,dc.upper()))
+                    conn.commit(); st.success(f"Dept '{dn}' added."); st.rerun()
+                except Exception as ex: st.error(str(ex))
+                finally: conn.close()
+    else:
+        st.caption(
+            "ℹ️ Departments are managed centrally by SuperAdmin. "
+            "Contact SuperAdmin to add or modify departments."
+        )
     st.divider()
     st.markdown("**Add Location / Lab**")
     if depts:
@@ -613,16 +622,50 @@ def show_audit(module_code):
 
 def show_role_matrix(module_code):
     """🔐 Role & Privileges Matrix for SRGEC-SIMS module."""
+    from utils.auth import current_user
+    user = current_user()
+    is_superadmin = bool(int(user.get("is_super_admin") or 0))
+ 
     mod = _fo("SELECT * FROM tbl_modules WHERE module_code=?", (module_code,))
     if not mod: return
     mod = dict(mod)
-
     st.info(
         "Define default privileges per role for this module. "
         "These apply to all users with that role unless overridden individually."
     )
-
     roles_list = list(ROLE_DEFAULTS.keys())
+ 
+    if not is_superadmin:
+        st.warning(
+            "⛔ Role & Privileges are managed centrally by SuperAdmin. "
+            "You can view the current matrix below, but editing is restricted."
+        )
+        rows_db = [dict(r) for r in _fa(
+            "SELECT * FROM tbl_role_module_privileges WHERE module_code=? ORDER BY role_name,sub_module",
+            (module_code,))]
+        if not rows_db:
+            st.info("No role privileges defined yet. Contact SuperAdmin to configure.")
+            return
+        lookup = {(r["role_name"],r["sub_module"]): r for r in rows_db}
+        rows = []
+        for sub in SIMS_SUB_MODULES:
+            row = {"Sub-Module": sub}
+            for role_n in roles_list:
+                r = lookup.get((role_n, sub), {})
+                if not r.get("is_visible", 1):
+                    row[role_n] = "🚫"
+                else:
+                    icons = ""
+                    if r.get("can_view",1):    icons += "👁 "
+                    if r.get("can_add",0):     icons += "➕ "
+                    if r.get("can_edit",0):    icons += "✏️ "
+                    if r.get("can_delete",0):  icons += "🗑 "
+                    if r.get("can_approve",0): icons += "✅ "
+                    row[role_n] = icons.strip() or "👁"
+            rows.append(row)
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        return
+ 
     sub1, sub2 = st.tabs(["📋 View Matrix", "✏️ Edit Role Privileges"])
 
     with sub1:

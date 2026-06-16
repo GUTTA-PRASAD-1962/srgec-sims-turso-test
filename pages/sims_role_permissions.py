@@ -103,40 +103,24 @@ RESTRICTED = {
 
 def show(module_code):
     """Entry point — called from module_home for admin_matrix subpage."""
-    import sqlite3
-    from config import DB_PATH
+    from db.connection import fetchall as fetchall, fetchone as fetchone, execute as execute
     from utils.auth import current_user, require_module_access
-
     role = require_module_access(module_code)
     if role not in ("SuperAdmin","SysAdmin"):
-        st.error("🔒 Access denied — SysAdmin only."); return
-
+        st.error("🔒 Access denied."); return
     user = current_user()
-
-    def get_conn():
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
-        return conn
-
-    def fetchall(sql, params=()):
-        conn = get_conn()
-        try: return [dict(r) for r in conn.execute(sql, params).fetchall()]
-        finally: conn.close()
-
-    def fetchone(sql, params=()):
-        conn = get_conn()
-        try:
-            r = conn.execute(sql, params).fetchone()
-            return dict(r) if r else None
-        finally: conn.close()
-
-    def execute(sql, params=()):
-        conn = get_conn()
-        try: conn.execute(sql, params); conn.commit()
-        finally: conn.close()
+    is_superadmin = bool(int(user.get("is_super_admin") or 0))
 
     st.title(f"🔐 Role Permissions Manager")
     st.caption(f"Module: **{module_code}** — Define what each role can do. Changes take effect immediately.")
+
+    if not is_superadmin:
+        st.warning(
+            "⛔ Role & Privileges are managed centrally by SuperAdmin. "
+            "You can view the current matrix below, but editing is restricted."
+        )
+        _permission_matrix(module_code, fetchall)
+        return
 
     tab1, tab2, tab3 = st.tabs([
         "📋 Permission Matrix",
@@ -146,7 +130,6 @@ def show(module_code):
     with tab1: _permission_matrix(module_code, fetchall)
     with tab2: _edit_by_role(module_code, user, fetchall, fetchone, execute)
     with tab3: _edit_by_module(module_code, user, fetchall, fetchone, execute)
-
 
 # ══════════════════════════════════════════════════════════════════
 # TAB 1 — Full matrix overview

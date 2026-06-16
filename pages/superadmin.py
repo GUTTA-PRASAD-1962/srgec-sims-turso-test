@@ -159,34 +159,91 @@ def _workflow():
     sel_m=st.selectbox("Module",[m["module_name"] for m in mods],key="sa_wm")
     mid=[m["module_id"] for m in mods if m["module_name"]==sel_m][0]
     rules=[dict(r) for r in _fa("SELECT * FROM tbl_workflow_rules WHERE module_id=? ORDER BY sort_order",(mid,))]
+
     if rules:
         st.dataframe(pd.DataFrame([{"From":r["from_status"],"Action":r["action_label"],"To":r["to_status"],"Roles":r["allowed_roles"],"Active":"Yes" if r["is_active"] else "No"} for r in rules]),
                      use_container_width=True,hide_index=True)
+
     st.divider()
+
+    # ── Rule selector: choose existing rule to edit, or "Add New Rule" ──
+    rule_opts = {"➕ Add New Rule": None}
+    rule_opts.update({
+        f"{r['from_status']} → {r['action_label']} → {r['to_status']}": r["rule_id"]
+        for r in rules
+    })
+    sel_label = st.selectbox(
+        "Select a rule to edit, or choose 'Add New Rule'",
+        list(rule_opts.keys()), key="sa_w_select"
+    )
+    sel_rule_id = rule_opts[sel_label]
+    editing = sel_rule_id is not None
+    cur = next((r for r in rules if r["rule_id"] == sel_rule_id), None) if editing else None
+
+    if editing:
+        st.info(f"Editing rule: **{sel_label}**")
+    else:
+        st.caption("Fill in the fields below to create a new rule.")
+
+    # ── Form fields, pre-filled if editing ──────────────────────────────
     w1,w2=st.columns(2)
-    wf=w1.text_input("From Status *",key="sa_wf"); wt=w2.text_input("To Status *",key="sa_wt")
+    wf=w1.text_input("From Status *", value=cur["from_status"] if editing else "", key=f"sa_wf_{sel_rule_id}")
+    wt=w2.text_input("To Status *",   value=cur["to_status"]   if editing else "", key=f"sa_wt_{sel_rule_id}")
     w3,w4=st.columns(2)
-    wl=w3.text_input("Action Label *",key="sa_wl"); wr=w4.text_input("Allowed Roles (comma separated) *",key="sa_wr")
+    wl=w3.text_input("Action Label *", value=cur["action_label"]  if editing else "", key=f"sa_wl_{sel_rule_id}")
+    wr=w4.text_input("Allowed Roles (comma separated) *", value=cur["allowed_roles"] if editing else "", key=f"sa_wr_{sel_rule_id}")
     w5,w6=st.columns(2)
-    wrc=w5.checkbox("Requires Comment",value=True,key="sa_wrc"); wra=w6.checkbox("Requires Assignee",key="sa_wra")
-    if st.button("Add Rule",key="sa_wadd"):
+    wrc=w5.checkbox("Requires Comment", value=bool(cur["requires_comment"]) if editing else True, key=f"sa_wrc_{sel_rule_id}")
+    wra=w6.checkbox("Requires Assignee", value=bool(cur["requires_assignee"]) if editing else False, key=f"sa_wra_{sel_rule_id}")
+    wact = st.checkbox("Active", value=bool(cur["is_active"]) if editing else True, key=f"sa_wact_{sel_rule_id}")
+
+    btn_label = "💾 Save Changes" if editing else "➕ Add Rule"
+    if st.button(btn_label, key=f"sa_wsubmit_{sel_rule_id}", type="primary"):
         if wf and wt and wl and wr:
             conn=get_conn()
             try:
-                conn.execute("INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,action_label,allowed_roles,requires_comment,requires_assignee,sort_order) VALUES (?,?,?,?,?,?,?,?)",
-                             (mid,wf.upper(),wt.upper(),wl,wr,1 if wrc else 0,1 if wra else 0,len(rules)))
-                conn.commit(); st.success("Rule added."); st.rerun()
-            except Exception as e: st.error(str(e))
-            finally: conn.close()
-    if rules:
-        st.divider()
-        r_opts={f"{r['from_status']} → {r['action_label']} → {r['to_status']}":r["rule_id"] for r in rules}
-        sel_r=st.selectbox("Deactivate Rule",list(r_opts.keys()),key="sa_wdel")
-        if st.button("Deactivate",key="sa_wdelbtn"):
-            conn=get_conn()
-            conn.execute("UPDATE tbl_workflow_rules SET is_active=0 WHERE rule_id=?",(r_opts[sel_r],))
-            conn.commit(); conn.close(); st.success("Deactivated."); st.rerun()
+                if editing:
+                    conn.execute(
+                        "UPDATE tbl_workflow_rules SET from_status=?, to_status=?, "
+                        "action_label=?, allowed_roles=?, requires_comment=?, "
+                        "requires_assignee=?, is_active=? WHERE rule_id=?",
+                        (wf.upper(), wt.upper(), wl, wr,
+                         1 if wrc else 0, 1 if wra else 0, 1 if wact else 0,
+                         sel_rule_id)
+                    )
+                    conn.commit()
+                    st.success("Rule updated.")
+                else:
+                    conn.execute(
+                        "INSERT INTO tbl_workflow_rules (module_id,from_status,to_status,"
+                        "action_label,allowed_roles,requires_comment,requires_assignee,sort_order) "
+                        "VALUES (?,?,?,?,?,?,?,?)",
+                        (mid, wf.upper(), wt.upper(), wl, wr,
+                         1 if wrc else 0, 1 if wra else 0, len(rules))
+                    )
+                    conn.commit()
+                    st.success("Rule added.")
+                st.rerun()
+            except Exception as e:
+                st.error(str(e))
+            finally:
+                conn.close()
+        else:
+            st.warning("Please fill in all required fields (marked *).")
 
+    if editing:
+        st.divider()
+        if st.button("🗑️ Delete This Rule Permanently", key=f"sa_wdelete_{sel_rule_id}"):
+            conn=get_conn()
+            try:
+                conn.execute("DELETE FROM tbl_workflow_rules WHERE rule_id=?", (sel_rule_id,))
+                conn.commit()
+                st.success("Rule deleted.")
+                st.rerun()
+            except Exception as e:
+                st.error(str(e))
+            finally:
+                conn.close()
 def _depts():
     st.subheader("Departments & Locations")
     depts=[dict(r) for r in _fa("SELECT * FROM tbl_departments WHERE is_active=1 ORDER BY dept_name")]

@@ -448,8 +448,9 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
     sel_action = st.selectbox("Select Action",list(actions.keys()),key=f"ua_{k}")
     rule       = actions[sel_action]
     st.caption(f"`{status}` → `{rule['to_status']}`")
-
-    comment = st.text_area("Comments *",key=f"uc_{k}",height=70)
+    comment_required = bool(rule.get("requires_comment"))
+    comment_label = "Comments *" if comment_required else "Comments (optional)"
+    comment = st.text_area(comment_label,key=f"uc_{k}",height=70)
 
     assignee_id = None
     if rule.get("requires_assignee"):
@@ -466,7 +467,9 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
             assignee_id = t_opts[pick]
 
     if st.button(f"{sel_action}",type="primary",key=f"usub_{k}"):
-        if not comment.strip(): st.error("Comments required."); return
+        if comment_required and not comment.strip():
+            st.error("Comments required for this action.")
+            return
         try:
             conn = get_conn()
             new_status = rule["to_status"]

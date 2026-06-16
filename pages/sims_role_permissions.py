@@ -103,8 +103,16 @@ RESTRICTED = {
 
 def show(module_code):
     """Entry point — called from module_home for admin_matrix subpage."""
-    from db.connection import fetchall as fetchall, fetchone as fetchone, execute as execute
+    from db.connection import fetchall as _raw_fetchall, fetchone as _raw_fetchone, execute as execute
     from utils.auth import current_user, require_module_access
+ 
+    def fetchall(sql, params=()):
+        return [dict(r) for r in _raw_fetchall(sql, params)]
+ 
+    def fetchone(sql, params=()):
+        r = _raw_fetchone(sql, params)
+        return dict(r) if r else None
+ 
     role = require_module_access(module_code)
     if role not in ("SuperAdmin","SysAdmin"):
         st.error("🔒 Access denied."); return

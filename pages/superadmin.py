@@ -82,7 +82,7 @@ def _users():
     g1,g2,g3 = st.columns(3)
     sel_u=g1.selectbox("User",[f"{u['full_name']} (#{u['user_id']})" for u in users],key="sa_guser")
     sel_m=g2.selectbox("Module",[m["module_name"] for m in mods],key="sa_gmod")
-    sel_r=g3.selectbox("Role",["SuperAdmin","SysAdmin","HoD","Coordinator","Technician","Lab-IC","User"],key="sa_grole")
+    sel_r=g3.selectbox("Role",["SuperAdmin","SysAdmin","HoD","ECE-HoD","Coordinator","Technician","Lab-IC","User"],key="sa_grole")
     if st.button("Grant Access",key="sa_ggrant"):
         uid=int(sel_u.split("#")[1].rstrip(")"))
         mid=[m["module_id"] for m in mods if m["module_name"]==sel_m][0]

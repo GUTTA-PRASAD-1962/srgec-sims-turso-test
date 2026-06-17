@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS tbl_user_module_access (
     role_name  TEXT NOT NULL,
     is_active  INTEGER DEFAULT 1,
     granted_at TEXT DEFAULT (datetime('now','localtime')),
-    UNIQUE(user_id, module_id)
+    UNIQUE(user_id, module_id, role_name)
 );
 
 CREATE TABLE IF NOT EXISTS tbl_item_types (

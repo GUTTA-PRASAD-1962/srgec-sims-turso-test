@@ -45,78 +45,43 @@ def show(module_code):
 
 
 # ── helpers ──────────────────────────────────────────────────────
-def _get_actions(mid, role, status):
-    """Get available actions for role+status from DB rules."""
+def _get_actions(mid, role, status, user=None, call=None):
+    """
+    Get available actions for role+status from DB rules.
+    For role 'HoD', additionally requires the acting user's dept_id to
+    match the complaint-raiser's dept_id (so the right department's HoD
+    sees the action, not every HoD in the institute).
+    """
     rules = [dict(r) for r in _fa("""
         SELECT * FROM tbl_workflow_rules
         WHERE module_id=? AND from_status=? AND is_active=1
         ORDER BY sort_order
     """,(mid, status))]
-    return {r["action_label"]: r for r in rules
-            if any(r2.strip() == role for r2 in r["allowed_roles"].split(","))
-            or role == "SuperAdmin"}
 
+    # Determine the complaint's originating department (via raised_by user)
+    call_dept_id = None
+    if call:
+        raiser = _fo("SELECT dept_id FROM tbl_users WHERE user_id=?",
+                      (call.get("raised_by"),))
+        if raiser:
+            call_dept_id = dict(raiser).get("dept_id")
 
-def _get_role_statuses(mid, role):
-    if role == "SuperAdmin":
-        rows = _fa("SELECT DISTINCT from_status FROM tbl_workflow_rules WHERE module_id=? AND is_active=1",(mid,))
-        return list(set(dict(r)["from_status"] for r in rows))
-    rows = _fa("""
-        SELECT DISTINCT from_status FROM tbl_workflow_rules
-        WHERE module_id=? AND is_active=1
-          AND (',' || allowed_roles || ',') LIKE ?
-    """,(mid, f"%,{role},%"))
-    if not rows:
-        rows = _fa("""
-            SELECT DISTINCT from_status FROM tbl_workflow_rules
-            WHERE module_id=? AND is_active=1 AND allowed_roles LIKE ?
-        """,(mid, f"%{role}%"))
-    return list(set(dict(r)["from_status"] for r in rows))
+    user_dept_id = user.get("dept_id") if user else None
 
-
-def _render_table(calls):
-    rows = [{
-        "Call #":     c["call_number"],
-        "Status":     f"{STATUS_ICON.get(c['call_status'],'⚪')} {c['call_status']}",
-        "Asset UID":  c.get("unique_item_id","—"),
-        "Dept":       c.get("dept_name","—"),
-        "Problem":    (c.get("complaint_text","") or "")[:50],
-        "Raised By":  c.get("raised_by_name",""),
-        "Assignee":   c.get("assignee_name","") or "—",
-        "Raised":     str(c.get("created_at",""))[:16],
-    } for c in calls]
-    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
-
-
-def _load_calls(mid, statuses=None, dept_id=None, assignee_id=None, search=None, limit=200):
-    q = """
-        SELECT c.*, i.unique_item_id, i.description AS item_desc,
-               d.dept_name, l.location_name,
-               u.full_name AS raised_by_name,
-               u2.full_name AS assignee_name
-        FROM tbl_calls c
-        LEFT JOIN tbl_items i ON i.item_id=c.item_id
-        LEFT JOIN tbl_departments d ON d.dept_id=c.dept_id
-        LEFT JOIN tbl_locations l ON l.location_id=c.location_id
-        JOIN tbl_users u ON u.user_id=c.raised_by
-        LEFT JOIN tbl_users u2 ON u2.user_id=c.current_assignee
-        WHERE c.module_id=?
-    """
-    params = [mid]
-    if statuses:
-        ph = ",".join("?" * len(statuses))
-        q += f" AND c.call_status IN ({ph})"
-        params.extend(statuses)
-    if dept_id:
-        q += " AND c.dept_id=?"; params.append(dept_id)
-    if assignee_id:
-        q += " AND c.current_assignee=?"; params.append(assignee_id)
-    if search:
-        q += " AND (c.call_number LIKE ? OR i.unique_item_id LIKE ?)"
-        params.extend([f"%{search}%", f"%{search}%"])
-    q += f" ORDER BY c.created_at DESC LIMIT {limit}"
-    return [dict(r) for r in _fa(q, params)]
-
+    result = {}
+    for r in rules:
+        allowed = [r2.strip() for r2 in r["allowed_roles"].split(",")]
+        if role == "SuperAdmin":
+            result[r["action_label"]] = r
+            continue
+        if role not in allowed:
+            continue
+        if role == "HoD":
+            if call_dept_id is not None and user_dept_id is not None \
+               and call_dept_id != user_dept_id:
+                continue
+        result[r["action_label"]] = r
+    return result
 
 # ══ TAB 1 — PENDING MY ACTION ════════════════════════════════════
 def _tab_pending(user, role, mod, mid):
@@ -440,7 +405,7 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
     st.divider()
 
     # Get available actions
-    actions = _get_actions(mid, role, status)
+    actions = _get_actions(mid, role, status, user=user, call=call)
     if not actions:
         st.info(f"No actions available for **{role}** on status **{status}**."); return
 

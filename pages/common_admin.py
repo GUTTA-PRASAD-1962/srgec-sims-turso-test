@@ -47,12 +47,14 @@ SIMS_SUB_MODULES = [
 ]
 
 ROLE_DEFAULTS = {
-    "SysAdmin":   dict(can_view=1,can_add=1,can_edit=1,can_delete=1,can_approve=1,is_visible=1),
-    "HoD":        dict(can_view=1,can_add=0,can_edit=0,can_delete=0,can_approve=1,is_visible=1),
-    "Coordinator":dict(can_view=1,can_add=1,can_edit=1,can_delete=0,can_approve=1,is_visible=1),
-    "Technician": dict(can_view=1,can_add=0,can_edit=0,can_delete=0,can_approve=0,is_visible=1),
-    "Lab-IC":     dict(can_view=1,can_add=1,can_edit=0,can_delete=0,can_approve=0,is_visible=1),
-    "User":       dict(can_view=1,can_add=0,can_edit=0,can_delete=0,can_approve=0,is_visible=1),
+    ROLE_DEFAULTS = {
+    "SysAdmin":   {s: {"can_view":1,"can_insert":1,"can_update":1,"can_delete":1} for s in SUB_MODULES},
+    "HoD":        {s: {"can_view":1,"can_insert":0,"can_update":0,"can_delete":0} for s in SUB_MODULES},
+    "HEAD-UPS":   {s: {"can_view":1,"can_insert":0,"can_update":0,"can_delete":0} for s in SUB_MODULES},
+    "Coordinator":{s: {"can_view":1,"can_insert":1,"can_update":1,"can_delete":0} for s in SUB_MODULES},
+    "Technician": {s: {"can_view":1,"can_insert":0,"can_update":0,"can_delete":0} for s in SUB_MODULES},
+    "Lab-IC":     {s: {"can_view":1,"can_insert":1,"can_update":0,"can_delete":0} for s in SUB_MODULES},
+    "User":       {s: {"can_view":1,"can_insert":0,"can_update":0,"can_delete":0} for s in SUB_MODULES},
 }
 
 ROLE_VISIBLE = {
@@ -195,7 +197,7 @@ def show_users(module_code):
                     WHERE a.user_id=? AND m.module_code=?
                 """,(eu["user_id"], module_code))
                 cur_role_name = dict(cur_role)["role_name"] if cur_role else "User"
-                role_options  = ["SuperAdmin","SysAdmin","HoD","ECE-HoD","Coordinator","Technician","Lab-IC","User"]
+                role_options  = ["SuperAdmin","SysAdmin","HoD","HEAD-UPS","Coordinator","Technician","Lab-IC","User"]
 
                 with st.form(f"edit_user_form_{mid}"):
                     fn   = st.text_input("Full Name",  eu["full_name"])
@@ -295,7 +297,7 @@ def show_users(module_code):
             emp_id  = u4.text_input("Employee ID *")
             u5,u6   = st.columns(2)
             role_sel= u5.selectbox("Module Role *",
-                                    ["SysAdmin","HoD","ECE-HoD","Coordinator","Technician","Lab-IC","User"])
+                                    ["SysAdmin","HoD","HEAD-UPS","Coordinator","Technician","Lab-IC","User"])
             dept_sel= u6.selectbox("Department", list(dm.keys()))
             u7,u8   = st.columns(2)
             email   = u7.text_input("Email")
@@ -331,7 +333,7 @@ def show_users(module_code):
         g1,g2,g3 = st.columns(3)
         all_u = [dict(r) for r in _fa("SELECT user_id,full_name,username FROM tbl_users WHERE is_active=1 ORDER BY full_name")]
         sel_u = g1.selectbox("User",[f"{u['full_name']} ({u['username']})" for u in all_u],key=f"{mid}_ga_user")
-        sel_r = g2.selectbox("Role",["SysAdmin","HoD","ECE-HoD","Coordinator","Technician","Lab-IC","User"],key=f"{mid}_ga_role")
+        sel_r = g2.selectbox("Role",["SysAdmin","HoD","HEAD-UPS","Coordinator","Technician","Lab-IC","User"],key=f"{mid}_ga_role")
         if g3.button("✅ Grant Access", key=f"{mid}_ga_save"):
             idx = [f"{u['full_name']} ({u['username']})" for u in all_u].index(sel_u)
             uid = all_u[idx]["user_id"]
@@ -495,7 +497,7 @@ def show_role_matrix(module_code):
         "Warranty Alerts", "Reports", "User Management",
         "Dept & Lab Setup", "Suppliers", "Audit Log",
     ]
-    roles_list = ["SysAdmin","HoD","ECE-HoD","Coordinator","Technician","Lab-IC","User"]
+    roles_list = ["SysAdmin","HoD","HEAD-UPS","Coordinator","Technician","Lab-IC","User"]
     privs      = ["VIEW","ADD","EDIT","DELETE","APPROVE"]
 
     # Load existing matrix from DB

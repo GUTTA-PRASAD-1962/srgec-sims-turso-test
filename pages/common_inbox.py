@@ -143,6 +143,23 @@ def _load_calls(mid, statuses=None, dept_id=None, search=None):
     return [dict(r) for r in rows]
 
 
+def _render_table(calls):
+    """Render a list of complaint dicts as a summary table."""
+    import pandas as pd
+    if not calls:
+        st.info("No complaints to display.")
+        return
+    df = pd.DataFrame([{
+        "Call #": c.get("call_number", ""),
+        "Asset UID": c.get("unique_item_id", "—"),
+        "Department": c.get("dept_name", "—"),
+        "Status": c.get("call_status", ""),
+        "Raised By": c.get("raised_by_name", "—"),
+        "Assignee": c.get("assignee_name", "—"),
+    } for c in calls])
+    st.dataframe(df, use_container_width=True, hide_index=True)
+
+
 # ══ TAB 1 — PENDING MY ACTION ════════════════════════════════════
 def _tab_pending(user, role, mod, mid):
     role_statuses = _get_role_statuses(mid, role)

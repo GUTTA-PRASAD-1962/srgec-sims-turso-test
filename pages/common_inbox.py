@@ -87,14 +87,54 @@ def _get_actions(mid, role, status, user=None, call=None):
 def _get_role_statuses(mid, role):
     """Get the list of statuses where this role has at least one available action."""
     if role == "SuperAdmin":
-        rows = _fa("SELECT DISTINCT from_status FROM tbl_workflow_rules WHERE module_id=? AND is_active=1",(mid,))
-        return list(set(dict(r)["from_status"] for r in rows))
-    rows = _fa("""
+        rows = _fa("""
         SELECT DISTINCT from_status FROM tbl_workflow_rules
         WHERE module_id=? AND is_active=1
           AND (',' || allowed_roles || ',') LIKE ?
     """,(mid, f"%,{role},%"))
     return list(set(dict(r)["from_status"] for r in rows))
+
+
+def _load_calls(mid, statuses=None, dept_id=None, search=None):
+    """
+    Load complaints (tbl_calls) for a module, with optional filters:
+      statuses  - list of call_status values to include
+      dept_id   - filter to complaints raised by users in this department
+      search    - substring match on call_number or unique_item_id
+    Returns a list of dicts with joined item/department/user info.
+    """
+    q = """
+        SELECT c.*, i.unique_item_id, i.description AS item_desc,
+               u.full_name AS raised_by_name, u.dept_id AS dept_id,
+               d.dept_name,
+               au.full_name AS assignee_name
+        FROM tbl_calls c
+        LEFT JOIN tbl_items i ON i.item_id = c.item_id
+        LEFT JOIN tbl_users u ON u.user_id = c.raised_by
+        LEFT JOIN tbl_departments d ON d.dept_id = u.dept_id
+        LEFT JOIN tbl_users au ON au.user_id = c.current_assignee
+        WHERE c.module_id = ?
+    """
+    params = [mid]
+
+    if statuses:
+        placeholders = ",".join(["?"] * len(statuses))
+        q += f" AND c.call_status IN ({placeholders})"
+        params.extend(statuses)
+
+    if dept_id:
+        q += " AND u.dept_id = ?"
+        params.append(dept_id)
+
+    if search:
+        q += " AND (c.call_number LIKE ? OR i.unique_item_id LIKE ?)"
+        s = f"%{search}%"
+        params.extend([s, s])
+
+    q += " ORDER BY c.call_id DESC"
+
+    rows = _fa(q, tuple(params))
+    return [dict(r) for r in rows]
 
 
 # ══ TAB 1 — PENDING MY ACTION ════════════════════════════════════

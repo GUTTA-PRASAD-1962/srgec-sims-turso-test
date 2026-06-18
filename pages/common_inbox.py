@@ -83,6 +83,20 @@ def _get_actions(mid, role, status, user=None, call=None):
         result[r["action_label"]] = r
     return result
 
+
+def _get_role_statuses(mid, role):
+    """Get the list of statuses where this role has at least one available action."""
+    if role == "SuperAdmin":
+        rows = _fa("SELECT DISTINCT from_status FROM tbl_workflow_rules WHERE module_id=? AND is_active=1",(mid,))
+        return list(set(dict(r)["from_status"] for r in rows))
+    rows = _fa("""
+        SELECT DISTINCT from_status FROM tbl_workflow_rules
+        WHERE module_id=? AND is_active=1
+          AND (',' || allowed_roles || ',') LIKE ?
+    """,(mid, f"%,{role},%"))
+    return list(set(dict(r)["from_status"] for r in rows))
+
+
 # ══ TAB 1 — PENDING MY ACTION ════════════════════════════════════
 def _tab_pending(user, role, mod, mid):
     role_statuses = _get_role_statuses(mid, role)

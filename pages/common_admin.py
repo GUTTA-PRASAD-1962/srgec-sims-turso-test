@@ -47,7 +47,6 @@ SIMS_SUB_MODULES = [
 ]
 
 ROLE_DEFAULTS = {
-    ROLE_DEFAULTS = {
     "SysAdmin":   {s: {"can_view":1,"can_insert":1,"can_update":1,"can_delete":1} for s in SUB_MODULES},
     "HoD":        {s: {"can_view":1,"can_insert":0,"can_update":0,"can_delete":0} for s in SUB_MODULES},
     "HEAD-UPS":   {s: {"can_view":1,"can_insert":0,"can_update":0,"can_delete":0} for s in SUB_MODULES},

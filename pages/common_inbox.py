@@ -87,13 +87,19 @@ def _get_actions(mid, role, status, user=None, call=None):
 def _get_role_statuses(mid, role):
     """Get the list of statuses where this role has at least one available action."""
     if role == "SuperAdmin":
-        rows = _fa("""
-        SELECT DISTINCT from_status FROM tbl_workflow_rules
-        WHERE module_id=? AND is_active=1
-          AND (',' || allowed_roles || ',') LIKE ?
-    """,(mid, f"%,{role},%"))
+        rows = _fa(
+            "SELECT DISTINCT from_status FROM tbl_workflow_rules "
+            "WHERE module_id=? AND is_active=1",
+            (mid,)
+        )
+        return list(set(dict(r)["from_status"] for r in rows))
+    rows = _fa(
+        "SELECT DISTINCT from_status FROM tbl_workflow_rules "
+        "WHERE module_id=? AND is_active=1 "
+        "AND (',' || allowed_roles || ',') LIKE ?",
+        (mid, f"%,{role},%")
+    )
     return list(set(dict(r)["from_status"] for r in rows))
-
 
 def _load_calls(mid, statuses=None, dept_id=None, search=None):
     """

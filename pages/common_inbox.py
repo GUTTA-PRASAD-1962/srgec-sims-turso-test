@@ -229,13 +229,17 @@ def _tab_raise(user, role, mod, mid):
             conn.execute("""
                 INSERT INTO tbl_calls (module_id,call_number,item_id,raised_by,dept_id,
                     location_id,complaint_text,call_status,photo_path)
-                VALUES (?,?,?,?,?,?,?,'OPEN',?)
+                VALUES (?,?,?,?,?,?,?,'DEPT REVIEW',?)
             """,(mid,call_no,item["item_id"],user["user_id"],item.get("dept_id"),
                  item.get("location_id"),complaint.strip(),photo_path))
             call_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
             conn.execute("""
                 INSERT INTO tbl_call_workflow (call_id,action_by,action_type,action_comment,from_status,to_status)
                 VALUES (?,?,'Complaint Raised',?,'NONE','OPEN')
+            """,(call_id,user["user_id"],complaint.strip()))
+            conn.execute("""
+                INSERT INTO tbl_call_workflow (call_id,action_by,action_type,action_comment,from_status,to_status)
+                VALUES (?,?,'Forward to Dept HoD',?,'OPEN','DEPT REVIEW')
             """,(call_id,user["user_id"],complaint.strip()))
             conn.commit(); conn.close()
             st.session_state[f"_raise_msg_{mid}"] = ("s", f"Complaint {call_no} raised.")

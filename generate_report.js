@@ -1,0 +1,253 @@
+const {
+  Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+  AlignmentType, BorderStyle, WidthType, ShadingType, UnderlineType
+} = require('docx');
+const fs = require('fs');
+
+const data = JSON.parse(fs.readFileSync('/tmp/sims_report_data.json', 'utf8'));
+
+const W  = 9360;
+const C1 = 2600; const C2 = 6760;
+
+const bdr  = { style: BorderStyle.SINGLE, size: 4, color: "1B4F9A" };
+const bdrs = { top: bdr, bottom: bdr, left: bdr, right: bdr };
+const cm   = { top: 80, bottom: 80, left: 120, right: 120 };
+
+function lc(text, w) {
+  return new TableCell({
+    borders: bdrs, width: { size: w||C1, type: WidthType.DXA },
+    shading: { fill: "1B4F9A", type: ShadingType.CLEAR }, margins: cm,
+    children: [new Paragraph({ children: [
+      new TextRun({ text, bold: true, color: "FFFFFF", size: 19, font: "Arial" })
+    ]})]
+  });
+}
+function vc(text, w, span) {
+  const o = {
+    borders: bdrs, width: { size: w||C2, type: WidthType.DXA }, margins: cm,
+    children: [new Paragraph({ children: [
+      new TextRun({ text: text||"—", size: 20, font: "Arial" })
+    ]})]
+  };
+  if (span) o.columnSpan = span;
+  return new TableCell(o);
+}
+function row2(label, value) {
+  return new TableRow({ children: [lc(label), vc(value)] });
+}
+function row4(l1,v1,l2,v2) {
+  return new TableRow({ children: [
+    lc(l1,2300), vc(v1,2380), lc(l2,2300), vc(v2,2380)
+  ]});
+}
+function secRow(title) {
+  return new TableRow({ children: [
+    new TableCell({
+      columnSpan: 2, borders: bdrs,
+      width: { size: W, type: WidthType.DXA },
+      shading: { fill: "0D2B5E", type: ShadingType.CLEAR }, margins: cm,
+      children: [new Paragraph({ children: [
+        new TextRun({ text: title, bold: true, color: "F0A500", size: 22, font: "Arial" })
+      ]})]
+    })
+  ]});
+}
+
+// ── Dynamic timeline table -- module-agnostic, works for any workflow ──
+function timelineHeaderRow() {
+  return new TableRow({ children: [
+    new TableCell({
+      borders: bdrs, width: { size: 3000, type: WidthType.DXA },
+      shading: { fill: "1B4F9A", type: ShadingType.CLEAR }, margins: cm,
+      children: [new Paragraph({ children: [
+        new TextRun({ text: "Step / Action", bold:true, color:"FFFFFF", size:18, font:"Arial" })
+      ]})]
+    }),
+    new TableCell({
+      borders: bdrs, width: { size: 2000, type: WidthType.DXA },
+      shading: { fill: "1B4F9A", type: ShadingType.CLEAR }, margins: cm,
+      children: [new Paragraph({ children: [
+        new TextRun({ text: "By", bold:true, color:"FFFFFF", size:18, font:"Arial" })
+      ]})]
+    }),
+    new TableCell({
+      borders: bdrs, width: { size: 1700, type: WidthType.DXA },
+      shading: { fill: "1B4F9A", type: ShadingType.CLEAR }, margins: cm,
+      children: [new Paragraph({ children: [
+        new TextRun({ text: "Date", bold:true, color:"FFFFFF", size:18, font:"Arial" })
+      ]})]
+    }),
+    new TableCell({
+      borders: bdrs, width: { size: 2660, type: WidthType.DXA },
+      shading: { fill: "1B4F9A", type: ShadingType.CLEAR }, margins: cm,
+      children: [new Paragraph({ children: [
+        new TextRun({ text: "Remarks", bold:true, color:"FFFFFF", size:18, font:"Arial" })
+      ]})]
+    }),
+  ]});
+}
+function timelineRow(step) {
+  return new TableRow({ children: [
+    new TableCell({
+      borders: bdrs, width: { size: 3000, type: WidthType.DXA }, margins: cm,
+      children: [new Paragraph({ children: [
+        new TextRun({ text: step.action || step.step_label || "—", bold:true, size:18, font:"Arial" })
+      ]}),
+      new Paragraph({ children: [
+        new TextRun({ text: step.step_label || "", size:15, color:"666666", font:"Arial", italics:true })
+      ]})]
+    }),
+    new TableCell({
+      borders: bdrs, width: { size: 2000, type: WidthType.DXA }, margins: cm,
+      children: [new Paragraph({ children: [
+        new TextRun({ text: step.by || "—", size:18, font:"Arial" })
+      ]})]
+    }),
+    new TableCell({
+      borders: bdrs, width: { size: 1700, type: WidthType.DXA }, margins: cm,
+      children: [new Paragraph({ children: [
+        new TextRun({ text: step.on || "—", size:17, font:"Arial" })
+      ]})]
+    }),
+    new TableCell({
+      borders: bdrs, width: { size: 2660, type: WidthType.DXA }, margins: cm,
+      children: [new Paragraph({ children: [
+        new TextRun({ text: step.remarks || "—", size:17, font:"Arial" })
+      ]})]
+    }),
+  ]});
+}
+
+function sigTable() {
+  const sc = (label) => new TableCell({
+    borders: { top:{style:BorderStyle.NONE}, bottom:{style:BorderStyle.NONE},
+               left:{style:BorderStyle.NONE}, right:{style:BorderStyle.NONE} },
+    width: { size: Math.floor(W/3), type: WidthType.DXA },
+    margins: { top:200, bottom:80, left:120, right:120 },
+    children: [
+      new Paragraph({ children: [new TextRun({ text: " ", size:20 })] }),
+      new Paragraph({ children: [new TextRun({ text: " ", size:20 })] }),
+      new Paragraph({ children: [new TextRun({ text: " ", size:20 })] }),
+      new Paragraph({
+        border: { top: { style: BorderStyle.SINGLE, size:4, color:"000000" } },
+        children: [new TextRun({ text: label, bold:true, size:18, font:"Arial" })]
+      })
+    ]
+  });
+  return new Table({
+    width: { size: W, type: WidthType.DXA },
+    columnWidths: [Math.floor(W/3), Math.floor(W/3), Math.floor(W/3)],
+    rows: [new TableRow({ children: [
+      sc("Signature of Lab/Dept In-charge"),
+      sc("Signature of System Admin / Coordinator"),
+      sc("Signature of HoD")
+    ]})]
+  });
+}
+
+const d = data;
+
+const timelineRows = [timelineHeaderRow()];
+(d.steps || []).forEach((s, idx) => {
+  timelineRows.push(timelineRow(s));
+});
+
+const doc = new Document({
+  sections: [{
+    properties: {
+      page: {
+        size: { width: 11906, height: 16838 },
+        margin: { top: 720, right: 720, bottom: 720, left: 720 }
+      }
+    },
+    children: [
+      // ── Header ──────────────────────────────────────────────────────────
+      new Paragraph({
+        alignment: AlignmentType.CENTER, spacing: { after: 0 },
+        children: [new TextRun({ text:"Seshadri Rao Gudlavalleru Engineering College",
+          bold:true, size:32, font:"Arial", color:"1B4F9A" })]
+      }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER, spacing: { after: 0 },
+        children: [new TextRun({ text:"Gudlavalleru, Krishna District, Andhra Pradesh — 521 356",
+          size:20, font:"Arial", color:"444444" })]
+      }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER, spacing: { after: 60 },
+        children: [new TextRun({ text:"An Autonomous Institute — Permanently Affiliated to JNTUK, Kakinada",
+          size:18, font:"Arial", color:"666666", italics:true })]
+      }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER, spacing: { after: 100 },
+        border: { bottom: { style: BorderStyle.SINGLE, size:6, color:"F0A500" } },
+        children: [new TextRun({ text: (d.module_name || "SRGEC-SIMS").toUpperCase() + " — MAINTENANCE SYSTEM",
+          bold:true, size:22, font:"Arial", color:"1B4F9A" })]
+      }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER, spacing: { before:100, after:200 },
+        children: [new TextRun({ text:"COMPLAINT CLOSURE REPORT",
+          bold:true, size:28, font:"Arial", color:"0D2B5E",
+          underline: { type: UnderlineType.SINGLE } })]
+      }),
+
+      // ── Header info table ────────────────────────────────────────────
+      new Table({
+        width: { size: W, type: WidthType.DXA },
+        columnWidths: [C1, C2],
+        rows: [
+          secRow("1.  COMPLAINT DETAILS"),
+          row4("Call Number",         d.call_number,
+               "Date Raised",         d.raised_at),
+          row4("Asset UID",           d.unique_item_id,
+               "Department",          d.dept_name),
+          row2("Asset Description",   d.item_desc),
+          row2("Nature of Complaint", d.complaint_text),
+          row4("Raised By",           d.raised_by_name,
+               "Final Status",        d.final_status),
+        ]
+      }),
+
+      new Paragraph({ spacing: { before: 200 }, children: [
+        new TextRun({ text: "2.  COMPLAINT PROCESSING TIMELINE", bold:true,
+                       size: 22, font: "Arial", color: "0D2B5E" })
+      ]}),
+      new Paragraph({ spacing: { after: 100 }, children: [] }),
+
+      new Table({
+        width: { size: W, type: WidthType.DXA },
+        columnWidths: [3000, 2000, 1700, 2660],
+        rows: timelineRows
+      }),
+
+      new Paragraph({ spacing: { before: 200 }, children: [] }),
+
+      new Table({
+        width: { size: W, type: WidthType.DXA },
+        columnWidths: [C1, C2],
+        rows: [
+          secRow("3.  SPARE PARTS (if applicable)"),
+          row2("Parts Used",          d.parts_description),
+          row2("Total Cost",          d.parts_budget),
+          secRow("4.  FINAL STATUS"),
+          row4("Asset Status",        d.final_item_status,
+               "Total Resolution Time", d.downtime),
+        ]
+      }),
+
+      new Paragraph({ spacing: { before: 400 }, children: [] }),
+      sigTable(),
+      new Paragraph({
+        alignment: AlignmentType.CENTER, spacing: { before: 200 },
+        children: [new TextRun({
+          text: `Generated by SRGEC-SIMS  |  Call: ${d.call_number}  |  Module: ${d.module_name || ""}`,
+          size:16, font:"Arial", color:"888888", italics:true
+        })]
+      })
+    ]
+  }]
+});
+
+Packer.toBuffer(doc).then(buffer => {
+  fs.writeFileSync('/tmp/sims_complaint_report.docx', buffer);
+  console.log('OK');
+});

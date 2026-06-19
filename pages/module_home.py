@@ -119,6 +119,7 @@ def _render_module_sidebar(module_code, mod, role):
 
         sec("📈", "Reports", "#A5D6A7")
         pnav("📊  Reports & Export",      "reports",       "Reports")
+        pnav("📄  Closure Report",        "closure_report","Complaint Closure Report")
 
         if role in ("SuperAdmin","SysAdmin","Coordinator"):
             sec("⚙️", "Administration", "#F48FB1")
@@ -310,6 +311,9 @@ def _route(subpage, module_code, mod, role, user):
     elif subpage == "reports":
         from pages.common_reports import show as rep_show
         rep_show(mc)
+    elif subpage == "closure_report":
+        from pages.call_report import show as cr_show
+        cr_show(mc)
 
     # ── Administration sub-pages ───────────────────────────────────
     elif subpage == "admin_users":

@@ -105,8 +105,7 @@ def _render_module_sidebar(module_code, mod, role):
         pnav("📥  My Inbox",              "my_inbox",      "Complaints — My Inbox")
         pnav("📂  Complaint Register",    "complaint_register","Complaints — Complaint Register")
         pnav("🔩  Spare Parts Indent",    "spare_indent",  "Complaints — Spare Parts Indent")
-        pnav("📄  Closure Report",        "closure_report","Complaints — Closure Report")
-
+       
         sec("🔒", "Warranty", "#CE93D8")
         pnav("⚠️  Warranty Alerts",       "warranty_alerts","Warranty — Alerts")
         pnav("📅  Expiring Soon",         "warranty_expiring","Warranty — Expiring Soon")
@@ -261,12 +260,7 @@ def _route(subpage, module_code, mod, role, user):
             (st.success if t == "s" else st.error)(msg)
         _tab_spare_indent(user, role, mod, mid)
 
-    elif subpage == "closure_report":
-        st.title(f"{icon} {name} — Closure Report")
-        st.info("Select a FILE CLOSED complaint to generate the closure report.")
-        from pages.common_inbox import _tab_register
-        _tab_register(user, role, mod, mid)
-
+    
     # ── Warranty sub-pages ─────────────────────────────────────────
     elif subpage == "warranty_alerts":
         from pages.common_warranty import _alerts

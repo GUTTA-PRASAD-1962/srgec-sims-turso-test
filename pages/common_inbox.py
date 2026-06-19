@@ -169,7 +169,7 @@ def _tab_pending(user, role, mod, mid):
     calls = _load_calls(mid, statuses=role_statuses)
 
     # Filter by dept for non-admins
-    if role not in ("SuperAdmin","SysAdmin","Coordinator","HEAD-UPS"):
+    if role == "HoD":
         dept_id = user.get("dept_id")
         if dept_id: calls = [c for c in calls if c.get("dept_id") == dept_id]
     if role == "Technician":

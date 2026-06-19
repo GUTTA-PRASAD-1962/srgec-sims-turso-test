@@ -17,8 +17,9 @@ def show(module_code):
         "Generate the official **Complaint Closure Final Report** for a closed complaint. "
         "All fields are auto-filled from the system. Download as Word (.docx) for printing and signatures."
     )
+    from utils.auth import require_module_access
+    role = require_module_access(module_code)
     user = current_user()
-    role = user.get("role") or user.get("role_name") or ""
 
     mod = _fo("SELECT * FROM tbl_modules WHERE module_code=?", (module_code,))
     if not mod:

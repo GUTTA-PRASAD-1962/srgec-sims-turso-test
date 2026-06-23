@@ -491,6 +491,29 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
         c3.markdown(f"**Assignee:** {call['assignee_name']}")
     st.info(f"**Problem:** {call.get('complaint_text','')}")
 
+    # Spare Parts Indent — show when complaint is in budget/parts workflow
+    spare_statuses = [
+        "PARTS NEEDED","COST ESTIMATED","HEAD-UPS BUDGET REVIEW",
+        "BUDGET REVIEW","BUDGET APPROVED","ON HOLD","PO RAISED","UNDER REPAIR"
+    ]
+    if status in spare_statuses:
+        parts = [dict(r) for r in _fa(
+            "SELECT * FROM tbl_spare_indent WHERE call_id=? ORDER BY indent_id",
+            (call["call_id"],))]
+        if parts:
+            st.divider()
+            st.markdown("#### 🔧 Spare Parts Indent")
+            df_parts = pd.DataFrame([{
+                "Part":        p["description"],
+                "Qty":         p["quantity"],
+                "Unit Rs.":    p["cost_per_unit"],
+                "Total Rs.":   p["total_cost"],
+                "Source":      p.get("source", "—"),
+                "Status":      p["indent_status"],
+            } for p in parts])
+            st.dataframe(df_parts, use_container_width=True, hide_index=True)
+            st.markdown(f"**Grand Total: Rs.{sum(p['total_cost'] for p in parts):,.2f}**")
+
     # Timeline
     steps = [dict(r) for r in _fa("""
         SELECT wl.*, u.full_name AS actor FROM tbl_call_workflow wl

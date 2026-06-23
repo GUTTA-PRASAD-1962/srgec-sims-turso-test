@@ -335,30 +335,52 @@ def _indent_raise(user, role, mod, mid):
 
 
 def _indent_pending(user, role, mod, mid):
-    if role in ("SuperAdmin","SysAdmin","Coordinator"):
-        statuses = ["PARTS NEEDED","PARTS ORDERED"]
-    elif role in ("HoD",):
-        statuses = ["PARTS NEEDED"]
-    else:
-        st.info("No parts procurement actions for your role."); return
+    """Read-only view of spare parts indents with active complaints.
+    All workflow actions (cost estimate, budget approval, PO, etc.)
+    are handled through Complaints → My Inbox → Pending My Action.
+    """
+    # Show indents for complaints currently in the spares workflow
+    spare_statuses = [
+        "PARTS NEEDED", "COST ESTIMATED", "HEAD-UPS BUDGET REVIEW",
+        "BUDGET REVIEW", "BUDGET APPROVED", "ON HOLD", "PO RAISED", "UNDER REPAIR"
+    ]
+    calls = _load_calls(mid, statuses=spare_statuses)
+    if role == "HoD":
+        if user.get("dept_id"):
+            calls = [c for c in calls if c.get("dept_id") == user.get("dept_id")]
+    if not calls:
+        st.info("No active spare parts indents."); return
 
-    calls = _load_calls(mid, statuses=statuses)
-    if role not in ("SuperAdmin","SysAdmin","Coordinator") and user.get("dept_id"):
-        calls = [c for c in calls if c.get("dept_id")==user["dept_id"]]
-    if not calls: st.success("No indents pending."); return
-
-    opts = {f"{c['call_number']} | {c.get('unique_item_id','—')} | {c['call_status']}": c for c in calls}
-    sel  = st.selectbox("Select:",list(opts.keys()),key=f"{mid}_indp_sel")
+    opts = {f"{c['call_number']} | {c.get('unique_item_id','—')} | {c['call_status']}": c
+            for c in calls}
+    sel  = st.selectbox("Select complaint:", list(opts.keys()), key=f"{mid}_indp_sel")
     call = opts[sel]
 
-    parts = [dict(r) for r in _fa("SELECT * FROM tbl_spare_indent WHERE call_id=? ORDER BY indent_id",(call["call_id"],))]
+    st.markdown(f"**Call:** `{call['call_number']}` | **Status:** `{call['call_status']}`")
+
+    parts = [dict(r) for r in _fa(
+        "SELECT * FROM tbl_spare_indent WHERE call_id=? ORDER BY indent_id",
+        (call["call_id"],))]
+
     if parts:
-        df = pd.DataFrame([{"Part":p["description"],"Qty":p["quantity"],
-                            "Unit Rs.":p["cost_per_unit"],"Total Rs.":p["total_cost"],
-                            "Source":p.get("source",""),"Status":p["indent_status"]} for p in parts])
-        st.dataframe(df,use_container_width=True,hide_index=True)
+        df = pd.DataFrame([{
+            "Part":        p["description"],
+            "Qty":         p["quantity"],
+            "Unit Rs.":    p["cost_per_unit"],
+            "Total Rs.":   p["total_cost"],
+            "Source":      p.get("source", ""),
+            "Status":      p["indent_status"],
+        } for p in parts])
+        st.dataframe(df, use_container_width=True, hide_index=True)
         st.markdown(f"**Grand Total: Rs.{sum(p['total_cost'] for p in parts):,.2f}**")
+    else:
+        st.info("No spare parts items raised for this complaint yet.")
+
     st.divider()
+    st.info(
+        "ℹ️ To take action on this complaint (prepare cost estimate, approve budget, "
+        "raise PO, receive parts, etc.), go to **Complaints → My Inbox → Pending My Action**."
+    )
 
     # Actions based on call status
     status = call["call_status"]

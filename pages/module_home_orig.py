@@ -1,5 +1,5 @@
 """
-pages/module_home.py — Generic module home page with full sidebar navigation.
+pages/module_home.py ??? Generic module home page with full sidebar navigation.
 This is the landing page when any module is opened.
 All sub-modules route through here.
 
@@ -23,7 +23,7 @@ def show(module_code):
     # Store current module in session
     st.session_state["sims_module"] = module_code
 
-    # Get subpage — default to dashboard
+    # Get subpage ??? default to dashboard
     subpage = st.session_state.get(f"sub_{module_code}", "dashboard")
 
     # Render module sidebar
@@ -62,7 +62,7 @@ def _render_module_sidebar(module_code, mod, role):
                 st.rerun()
 
         def pnav(label, sub, priv_key):
-            """Privilege-aware nav — only shows if user can see it."""
+            """Privilege-aware nav ??? only shows if user can see it."""
             if _can_see(user, mc, priv_key):
                 nav(label, sub)
 
@@ -76,94 +76,93 @@ def _render_module_sidebar(module_code, mod, role):
                 unsafe_allow_html=True)
 
         # Dashboard
-        if st.button("🏠  Module Dashboard", type="primary",
+        if st.button("????  Module Dashboard", type="primary",
                      use_container_width=True, key=f"snb_{mc}_dash"):
             st.session_state[f"sub_{mc}"] = "dashboard"; st.rerun()
 
         # Back to Portal
-        if st.button("◀  Back to Portal", use_container_width=True, key=f"snb_{mc}_back"):
+        if st.button("???  Back to Portal", use_container_width=True, key=f"snb_{mc}_back"):
             st.session_state["sims_module"] = ""
             st.session_state["page"] = "dashboard"; st.rerun()
 
-        sec("🔍", "Inventory", "#4FC3F7")
-        pnav("📋  Asset Search & Edit",   "asset_search",  "Inventory — Asset Search & Edit")
-        pnav("📄  Case Sheets",           "case_sheets",   "Inventory — Case Sheets")
+        sec("????", "Inventory", "#4FC3F7")
+        pnav("????  Asset Search & Edit",   "asset_search",  "Inventory ??? Asset Search & Edit")
+        pnav("????  Case Sheets",           "case_sheets",   "Inventory ??? Case Sheets")
 
-        sec("📊", "Stock Registers", "#81C784")
-        pnav("🏛  Central Stock",         "central_stock", "Stock — Central Stock")
-        pnav("🏢  Department Stock",      "dept_stock",    "Stock — Department Stock")
+        sec("????", "Stock Registers", "#81C784")
+        pnav("????  Central Stock",         "central_stock", "Stock ??? Central Stock")
+        pnav("????  Department Stock",      "dept_stock",    "Stock ??? Department Stock")
 
-        sec("🛒", "Procurement", "#FFB74D")
-        pnav("📤  Forward Procurement",   "proc_forward",  "Procurement — Forward")
-        pnav("✅  Pending Approvals",     "proc_approvals","Procurement — Pending Approvals")
-        pnav("✏️  Joint Data Entry",      "proc_entry",    "Procurement — Joint Data Entry")
-        pnav("📋  Procurement Log",       "proc_log",      "Procurement — Log")
-        pnav("📥  Bulk Upload",           "bulk_upload",   "Procurement — Bulk Upload")
+        sec("????", "Procurement", "#FFB74D")
+        pnav("????  Forward Procurement",   "proc_forward",  "Procurement ??? Forward")
+        pnav("???  Pending Approvals",     "proc_approvals","Procurement ??? Pending Approvals")
+        pnav("??????  Joint Data Entry",      "proc_entry",    "Procurement ??? Joint Data Entry")
+        pnav("????  Procurement Log",       "proc_log",      "Procurement ??? Log")
+        pnav("????  Bulk Upload",           "bulk_upload",   "Procurement ??? Bulk Upload")
 
-        sec("🔧", "Complaints", "#EF9A9A")
-        pnav("🆕  Raise Complaint",       "raise_complaint","Complaints — Raise Complaint")
-        pnav("📥  My Inbox",              "my_inbox",      "Complaints — My Inbox")
-        pnav("📂  Complaint Register",    "complaint_register","Complaints — Complaint Register")
-        pnav("🔩  Spare Parts Indent",    "spare_indent",  "Complaints — Spare Parts Indent")
-        pnav("📄  Closure Report",        "closure_report","Complaints — Closure Report")
+        sec("????", "Complaints", "#EF9A9A")
+        pnav("????  Raise Complaint",       "raise_complaint","Complaints ??? Raise Complaint")
+        pnav("????  My Inbox",              "my_inbox",      "Complaints ??? My Inbox")
+        pnav("????  Complaint Register",    "complaint_register","Complaints ??? Complaint Register")
+        pnav("????  Spare Parts Indent",    "spare_indent",  "Complaints ??? Spare Parts Indent")
+        pnav("????  Closure Report",        "closure_report","Complaints ??? Closure Report")
 
-        sec("🔒", "Warranty", "#CE93D8")
-        pnav("⚠️  Warranty Alerts",       "warranty_alerts","Warranty — Alerts")
-        pnav("📅  Expiring Soon",         "warranty_expiring","Warranty — Expiring Soon")
+        sec("????", "Warranty", "#CE93D8")
+        pnav("??????  Warranty Alerts",       "warranty_alerts","Warranty ??? Alerts")
+        pnav("????  Expiring Soon",         "warranty_expiring","Warranty ??? Expiring Soon")
 
         if mod.get("has_maintenance", 1):
-            sec("🛠", "Maintenance", "#80DEEA")
-            pnav("🔧  Maintenance Sheet",     "maintenance_sheet","Maintenance — Sheet")
-            pnav("🚚  Asset Movement",        "asset_movement","Maintenance — Asset Movement")
-            pnav("🏭  Lab Maint. Register",   "lab_maint",     "Maintenance — Lab Register")
+            sec("????", "Maintenance", "#80DEEA")
+            pnav("????  Maintenance Sheet",     "maintenance_sheet","Maintenance ??? Sheet")
+            pnav("????  Asset Movement",        "asset_movement","Maintenance ??? Asset Movement")
+            pnav("????  Lab Maint. Register",   "lab_maint",     "Maintenance ??? Lab Register")
 
-        sec("📈", "Reports", "#A5D6A7")
-        pnav("📊  Reports & Export",      "reports",       "Reports")
+        sec("????", "Reports", "#A5D6A7")
+        pnav("????  Reports & Export",      "reports",       "Reports")
 
         if role in ("SuperAdmin","SysAdmin","Coordinator"):
-            sec("⚙️", "Administration", "#F48FB1")
-            pnav("👥  User Management",       "admin_users",   "Administration — User Management")
-            pnav("🏫  Dept & Lab Setup",      "admin_depts",   "Administration — Dept & Lab Setup")
-            pnav("🏭  Suppliers",             "admin_suppliers","Administration — Suppliers")
-            pnav("🔐  Role & Privileges",     "admin_matrix",  "Administration — Role & Privileges")
-            pnav("📜  Audit Log",             "admin_audit",   "Administration — Audit Log")
-            if user.get("is_super_admin"):
-                pnav("🆔  Asset UID Format",      "admin_uidfmt",  "Administration — UID Format")
+            sec("??????", "Administration", "#F48FB1")
+            pnav("????  User Management",       "admin_users",   "Administration ??? User Management")
+            pnav("????  Dept & Lab Setup",      "admin_depts",   "Administration ??? Dept & Lab Setup")
+            pnav("????  Suppliers",             "admin_suppliers","Administration ??? Suppliers")
+            pnav("????  Role & Privileges",     "admin_matrix",  "Administration ??? Role & Privileges")
+            pnav("????  Audit Log",             "admin_audit",   "Administration ??? Audit Log")
 
-        sec("👤", "Account", "#B0BEC5")
-        pnav("🔔  Notifications",         "notifications", "Account — Notifications")
-        pnav("🔑  Change Password",       "change_password","Account — Change Password")
+        sec("????", "Account", "#B0BEC5")
+        pnav("????  Notifications",         "notifications", "Account ??? Notifications")
+        pnav("????  Change Password",       "change_password","Account ??? Change Password")
 
 
 def _route(subpage, module_code, mod, role, user):
-    """Route to correct page — each sub-module opens its own dedicated page."""
+    """Route to correct page ??? each sub-module opens its own dedicated page."""
     mc  = module_code
     mid = mod["module_id"]
-    icon = mod.get("module_icon","📦")
+    icon = mod.get("module_icon","????")
     name = mod.get("module_name","")
 
     if subpage == "dashboard":
         _module_dashboard(mod, role)
 
-    # ── Stock Register sub-pages ───────────────────────────────────
+    # ?????? Stock Register sub-pages ?????????????????????????????????????????????????????????????????????????????????????????????????????????
     elif subpage in ("central_stock","asset_search","case_sheets","new_entry","issue_to_dept"):
-        # Central Stock — full page with tabs matching IT-IIMS Central Stock
+        # Central Stock ??? full page with tabs matching IT-IIMS Central Stock
         from pages.common_stock import _new_entry, _issue_to_dept, _view_stock, _asset_search, _edit_delete, _dept_view, _get_module
         m = _get_module(mc)
-        st.title(f"{icon} {name} — Central Stock")
+        st.title(f"{icon} {name} ??? Central Stock")
         if st.session_state.get("_stock_msg"):
             t, msg = st.session_state.pop("_stock_msg")
             (st.success if t == "s" else st.error)(msg)
         is_admin = role in ("SuperAdmin","SysAdmin","Coordinator")
         if is_admin:
-            tab1,tab2,tab3,tab4,tab5,tab6,tab7 = st.tabs([
-                "➕ New Procurement Entry",
-                "📥 Bulk Upload",
-                "🔀 Issue to Department",
-                "📋 View Central Stock",
-                "🔍 Asset Detail Search",
-                "✏️ Edit / Delete Entries",
-                "🏢 Dept-wise View",
+            tab1,tab2,tab3,tab4,tab5,tab6,tab7,tab8 = st.tabs([
+                "??? New Procurement Entry",
+                "???? Bulk Upload",
+                "???? Issue to Department",
+                "???? View Central Stock",
+                "???? Asset Detail Search",
+                "?????? Edit / Delete Entries",
+                "???? Category Summary",
+                "???? Dept-wise View",
             ])
             with tab1: _new_entry(user, role, m)
             with tab2: _bulk_upload(m, m["module_id"], user)
@@ -171,36 +170,36 @@ def _route(subpage, module_code, mod, role, user):
             with tab4: _view_stock(m)
             with tab5: _asset_search(m)
             with tab6: _edit_delete(user, m)
-            with tab7: _dept_view(m)
+            with tab7: _category_summary(m, mid)
+            with tab8: _dept_view(m)
         else:
-            tab1,tab2 = st.tabs(["📋 View Central Stock","🔍 Asset Search"])
+            tab1,tab2,tab3 = st.tabs(["???? View Central Stock","???? Asset Search","???? Category Summary"])
             with tab1: _view_stock(m)
             with tab2: _asset_search(m)
+            with tab3: _category_summary(m, mid)
 
     elif subpage == "dept_stock":
         from pages.common_stock import _dept_stock, _dept_view, _new_dept_entry, _get_module
         m = _get_module(mc)
-        st.title(f"{icon} {name} — Department Stock")
+        st.title(f"{icon} {name} ??? Department Stock")
         if st.session_state.get("_stock_msg"):
             t, msg = st.session_state.pop("_stock_msg")
             (st.success if t == "s" else st.error)(msg)
-        tab1,tab2,tab3,tab4,tab5 = st.tabs([
-            "📋 Stock Register",
-            "📦 All Assets in Dept",
-            "📊 Category Summary",
-            "➕ Manual Department Entry",
-            "🏷 Assign to Lab",
+        tab1,tab2,tab3,tab4 = st.tabs([
+            "???? Stock Register",
+            "???? All Assets in Dept",
+            "??? Manual Department Entry",
+            "???? Assign to Lab",
         ])
         with tab1: _dept_stock(m)
         with tab2: _dept_view(m)
-        with tab3: _category_summary(m, mid)
-        with tab4: _new_dept_entry(user, role, m)
-        with tab5: _assign_to_lab_sims(m, mid, user, role)
+        with tab3: _new_dept_entry(user, role, m)
+        with tab4: _assign_to_lab_sims(m, mid, user, role)
 
-    # ── Procurement — each sidebar item = dedicated page like IT-IIMS
+    # ?????? Procurement ??? each sidebar item = dedicated page like IT-IIMS
     elif subpage == "proc_forward":
         from pages.common_procurement import _forward
-        st.title("📤 Forward Procurement to Lab Faculty")
+        st.title("???? Forward Procurement to Lab Faculty")
         if st.session_state.get(f"_proc_msg_{mid}"):
             t, msg = st.session_state.pop(f"_proc_msg_{mid}")
             (st.success if t == "s" else st.error)(msg)
@@ -208,7 +207,7 @@ def _route(subpage, module_code, mod, role, user):
 
     elif subpage == "proc_entry":
         from pages.common_procurement import _joint_entry
-        st.title("✏️ Procurement Data Entry (Joint)")
+        st.title("?????? Procurement Data Entry (Joint)")
         if st.session_state.get(f"_proc_msg_{mid}"):
             t, msg = st.session_state.pop(f"_proc_msg_{mid}")
             (st.success if t == "s" else st.error)(msg)
@@ -216,118 +215,117 @@ def _route(subpage, module_code, mod, role, user):
 
     elif subpage == "proc_approvals":
         from pages.common_procurement import _approvals
-        st.title("✅ Procurement Pending Approvals")
+        st.title("??? Procurement Pending Approvals")
         _approvals(user, role, mod, mid)
 
     elif subpage == "proc_log":
         from pages.common_procurement import _log
-        st.title(f"{icon} {name} — Procurement Log")
+        st.title(f"{icon} {name} ??? Procurement Log")
         _log(user, role, mod, mid)
 
     elif subpage == "bulk_upload":
-        st.title(f"{icon} {name} — Bulk Upload")
+        st.title(f"{icon} {name} ??? Bulk Upload")
         _bulk_upload(mod, mid, user)
 
-    # ── Complaints — each sidebar item opens its own page ─────────
+    # ?????? Complaints ??? each sidebar item opens its own page ???????????????????????????
     elif subpage == "my_inbox":
         from pages.common_inbox import _tab_pending, _tab_register
-        st.title("📥 Complaint Inbox")
+        st.title("???? Complaint Inbox")
         if st.session_state.get(f"_inbox_msg_{mid}"):
             t, msg = st.session_state.pop(f"_inbox_msg_{mid}")
             (st.success if t == "s" else st.error)(msg)
         itab1, itab2 = st.tabs([
-            "⏳ Pending My Action",
-            "📋 All My Complaints",
+            "??? Pending My Action",
+            "???? All My Complaints",
         ])
         with itab1: _tab_pending(user, role, mod, mid)
         with itab2: _tab_register(user, role, mod, mid)
 
     elif subpage == "raise_complaint":
-        st.title("🆕 Raise Complaint Call")
+        st.title("???? Raise Complaint Call")
         if st.session_state.get(f"_raise_msg_{mid}"):
             t, msg = st.session_state.pop(f"_raise_msg_{mid}")
             (st.success if t == "s" else st.error)(msg)
-        from pages.common_inbox import _tab_raise
-        _tab_raise(user, role, mod, mid)
+        _raise_complaint_page(user, role, mod, mid)
 
     elif subpage == "complaint_register":
         from pages.common_inbox import _tab_register
-        st.title("📂 Complaint Register")
+        st.title("???? Complaint Register")
         _tab_register(user, role, mod, mid)
 
     elif subpage == "spare_indent":
         from pages.common_inbox import _tab_spare_indent
-        st.title("🔩 Spare Parts Indent")
+        st.title("???? Spare Parts Indent")
         if st.session_state.get(f"_indent_msg_{mid}"):
             t, msg = st.session_state.pop(f"_indent_msg_{mid}")
             (st.success if t == "s" else st.error)(msg)
         _tab_spare_indent(user, role, mod, mid)
 
     elif subpage == "closure_report":
-        st.title(f"{icon} {name} — Closure Report")
+        st.title(f"{icon} {name} ??? Closure Report")
         st.info("Select a FILE CLOSED complaint to generate the closure report.")
         from pages.common_inbox import _tab_register
         _tab_register(user, role, mod, mid)
 
-    # ── Warranty sub-pages ─────────────────────────────────────────
+    # ?????? Warranty sub-pages ???????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
     elif subpage == "warranty_alerts":
         from pages.common_warranty import _alerts
-        st.title(f"{icon} {name} — Warranty Alerts")
+        st.title(f"{icon} {name} ??? Warranty Alerts")
         _alerts(mod, mid)
 
     elif subpage == "warranty_expiring":
         from pages.common_warranty import _expiring
-        st.title(f"{icon} {name} — Expiring Soon")
+        st.title(f"{icon} {name} ??? Expiring Soon")
         _expiring(mod, mid)
 
-    # ── Maintenance sub-pages ──────────────────────────────────────
+    # ?????? Maintenance sub-pages ??????????????????????????????????????????????????????????????????????????????????????????????????????????????????
     elif subpage == "maintenance_sheet":
         from pages.common_maintenance import _maint_sheet
-        st.title(f"{icon} {name} — Maintenance Sheet")
+        st.title(f"{icon} {name} ??? Maintenance Sheet")
         _maint_sheet(user, role, mod, mid)
 
     elif subpage == "asset_movement":
         from pages.common_maintenance import _asset_movement
-        st.title(f"{icon} {name} — Asset Movement")
+        st.title(f"{icon} {name} ??? Asset Movement")
         _asset_movement(user, role, mod, mid)
 
     elif subpage == "lab_maint":
         from pages.common_maintenance import _lab_maint
-        st.title(f"{icon} {name} — Lab Maintenance Register")
+        st.title(f"{icon} {name} ??? Lab Maintenance Register")
         _lab_maint(user, role, mod, mid)
 
-    # ── Inventory — Asset Search / Case Sheets ─────────────────────
+    # ?????? Inventory ??? Asset Search / Case Sheets ???????????????????????????????????????????????????????????????
     elif subpage == "asset_search":
         from pages.common_stock import _asset_search, _get_module
         m = _get_module(mc)
-        st.title(f"{icon} {name} — Asset Search & Edit")
+        st.title(f"{icon} {name} ??? Asset Search & Edit")
         _asset_search(m)
 
     elif subpage == "case_sheets":
         from pages.common_stock import _asset_search, _get_module
         m = _get_module(mc)
-        st.title(f"{icon} {name} — Case Sheets")
+        st.title(f"{icon} {name} ??? Case Sheets")
         _asset_search(m)
 
-    # ── Reports ────────────────────────────────────────────────────
+    # ?????? Reports ????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
     elif subpage == "reports":
         from pages.common_reports import show as rep_show
         rep_show(mc)
 
-    # ── Administration sub-pages ───────────────────────────────────
+    # ?????? Administration sub-pages ?????????????????????????????????????????????????????????????????????????????????????????????????????????
     elif subpage == "admin_users":
         from pages.common_admin import show_users
-        st.title("👥 User Management")
+        st.title("???? User Management")
         show_users(mc)
 
     elif subpage == "admin_depts":
         from pages.common_admin import show_depts
-        st.title("🏫 Dept & Lab Setup")
+        st.title("???? Dept & Lab Setup")
         show_depts(mc)
 
     elif subpage == "admin_suppliers":
         from pages.common_admin import show_suppliers
-        st.title("🏭 Supplier Master")
+        st.title("???? Supplier Master")
         show_suppliers(mc)
 
     elif subpage == "admin_matrix":
@@ -336,22 +334,18 @@ def _route(subpage, module_code, mod, role, user):
 
     elif subpage == "admin_audit":
         from pages.common_admin import show_audit
-        st.title("📜 Audit Log")
+        st.title("???? Audit Log")
         show_audit(mc)
 
-    elif subpage == "admin_uidfmt":
-        from pages.uid_format import show as uidfmt_show
-        uidfmt_show(mc)
-
-    # ── Account ────────────────────────────────────────────────────
+    # ?????? Account ????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
     elif subpage == "notifications":
         from pages.common_notifications import show as notif_show
-        st.title("🔔 Notifications")
+        st.title("???? Notifications")
         notif_show()
 
     elif subpage == "change_password":
         from pages.common_account import show as acct_show
-        st.title("🔑 Change Password")
+        st.title("???? Change Password")
         acct_show()
 
     else:
@@ -359,12 +353,12 @@ def _route(subpage, module_code, mod, role, user):
 
 
 def _assign_to_lab_sims(mod, mid, user, role):
-    """Assign unassigned dept assets to specific locations — SRGEC-SIMS version."""
+    """Assign unassigned dept assets to specific locations ??? SRGEC-SIMS version."""
     from db.connection import get_conn, fetchall as _fa
     from collections import defaultdict
     import pandas as pd
 
-    st.subheader("🏷 Assign Assets to Location / Lab")
+    st.subheader("???? Assign Assets to Location / Lab")
     st.info(
         "Assets issued from **Central Stock** to this department appear here as "
         "**Unassigned** until the coordinator distributes them to specific locations."
@@ -399,7 +393,7 @@ def _assign_to_lab_sims(mod, mid, user, role):
     """,(mid,))]
 
     if not unassigned:
-        st.success("✅ All assets are assigned to locations.")
+        st.success("??? All assets are assigned to locations.")
         _show_location_summary(mid)
         return
 
@@ -413,7 +407,7 @@ def _assign_to_lab_sims(mod, mid, user, role):
     st.markdown(
         f"<div style='background:#fff3cd;padding:10px;border-radius:6px;"
         f"border-left:4px solid #ffc107'>"
-        f"<b>⚠️ {len(unassigned)} asset(s) unassigned</b> across: "
+        f"<b>?????? {len(unassigned)} asset(s) unassigned</b> across: "
         f"{', '.join(depts_in)}</div>", unsafe_allow_html=True
     )
     st.markdown("")
@@ -430,7 +424,7 @@ def _assign_to_lab_sims(mod, mid, user, role):
         all_locs.extend(locs)
 
     if not all_locs:
-        st.error("No locations configured. Add locations in Administration → Dept & Lab Setup.")
+        st.error("No locations configured. Add locations in Administration ??? Dept & Lab Setup.")
         return
 
     loc_map = {f"{l['location_name']}": l["location_id"] for l in all_locs}
@@ -439,8 +433,8 @@ def _assign_to_lab_sims(mod, mid, user, role):
         t,m = st.session_state.pop(f"_asgn_msg_{mid}")
         (st.success if t=="s" else st.error)(m)
 
-    # Option A — Bulk by type
-    st.markdown("#### Option A — Assign by Asset Type (Bulk)")
+    # Option A ??? Bulk by type
+    st.markdown("#### Option A ??? Assign by Asset Type (Bulk)")
     with st.expander("Assign all units of a type to one location", expanded=True):
         c1,c2,c3 = st.columns(3)
         sel_type = c1.selectbox("Asset Type *", list(by_type.keys()), key=f"asl_type_{mid}")
@@ -451,9 +445,9 @@ def _assign_to_lab_sims(mod, mid, user, role):
                                    key=f"asl_qty_{mid}")
         sel_loc  = c3.selectbox("Assign to Location *", list(loc_map.keys()),
                                 key=f"asl_loc_{mid}")
-        st.markdown(f"Will assign **{qty_asgn}** `{sel_type}` → **{sel_loc}**")
+        st.markdown(f"Will assign **{qty_asgn}** `{sel_type}` ??? **{sel_loc}**")
 
-        if st.button("✅ Assign to Location", type="primary", key=f"asl_submit_{mid}"):
+        if st.button("??? Assign to Location", type="primary", key=f"asl_submit_{mid}"):
             to_assign = avail[:int(qty_asgn)]
             loc_id    = loc_map[sel_loc]
             try:
@@ -469,8 +463,8 @@ def _assign_to_lab_sims(mod, mid, user, role):
 
     st.markdown("---")
 
-    # Option B — Individual UIDs
-    st.markdown("#### Option B — Assign Individual Assets by UID")
+    # Option B ??? Individual UIDs
+    st.markdown("#### Option B ??? Assign Individual Assets by UID")
     with st.expander("Select specific asset UIDs"):
         df_un = pd.DataFrame([{
             "UID":r["unique_item_id"],"Type":r["type_name"],
@@ -481,7 +475,7 @@ def _assign_to_lab_sims(mod, mid, user, role):
                                  key=f"asl_uids_{mid}", height=80)
         sel_loc2  = st.selectbox("Assign to Location *", list(loc_map.keys()),
                                  key=f"asl_loc2_{mid}")
-        if st.button("✅ Assign Selected", type="primary", key=f"asl_uid_{mid}"):
+        if st.button("??? Assign Selected", type="primary", key=f"asl_uid_{mid}"):
             if not uid_input.strip(): st.error("Enter at least one UID."); return
             uids = [u.strip() for u in uid_input.replace(",","\n").split("\n") if u.strip()]
             loc_id2 = loc_map[sel_loc2]
@@ -507,7 +501,7 @@ def _assign_to_lab_sims(mod, mid, user, role):
 def _show_location_summary(mid):
     from db.connection import fetchall as _fa
     import pandas as pd
-    st.markdown("#### 📊 Current Location-wise Distribution")
+    st.markdown("#### ???? Current Location-wise Distribution")
     rows = [dict(r) for r in _fa("""
         SELECT d.dept_name, l.location_name, it.type_name, COUNT(*) AS total
         FROM tbl_items i
@@ -528,7 +522,7 @@ def _show_location_summary(mid):
 
 
 def _bulk_upload(mod, mid, user):
-    """Bulk upload assets from Excel template — mirrors IT-IIMS bulk upload."""
+    """Bulk upload assets from Excel template ??? mirrors IT-IIMS bulk upload."""
     import pandas as pd
     st.subheader("Bulk Upload Assets")
 
@@ -542,7 +536,7 @@ def _bulk_upload(mod, mid, user):
     buf = io.BytesIO()
     pd.DataFrame(columns=template_cols).to_excel(buf, index=False, engine="openpyxl")
     st.download_button(
-        "📥 Download Excel Template",
+        "???? Download Excel Template",
         buf.getvalue(),
         file_name=f"{mod['module_code']}_bulk_upload_template.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -625,7 +619,7 @@ def _bulk_upload(mod, mid, user):
 
 
 def _raise_complaint_page(user, role, mod, mid):
-    """Raise complaint — matches IT-IIMS raise_call.py exactly."""
+    """Raise complaint ??? matches IT-IIMS raise_call.py exactly."""
     from db.connection import get_conn
     from utils.helpers import save_scan
 
@@ -677,19 +671,19 @@ def _raise_complaint_page(user, role, mod, mid):
         else:
             asset = dict(asset)
             st.success(
-                f"**{asset['type_name']}** — {asset['description']} | "
+                f"**{asset['type_name']}** ??? {asset['description']} | "
                 f"{asset.get('make','')} | Status: `{asset['item_status']}`"
             )
 
-            # ── WARRANTY CHECK ────────────────────────────────────────────
+            # ?????? WARRANTY CHECK ????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
             from datetime import date as _date
             wto = asset.get("warranty_to","")
             if wto and str(wto)[:10] >= str(_date.today()):
                 msg = (
-                    "WARRANTY ALERT — THIS ASSET IS UNDER WARRANTY  \n"
+                    "WARRANTY ALERT ??? THIS ASSET IS UNDER WARRANTY  \n"
                     f"Warranty Valid Until: {wto[:10]}  \n"
-                    f"Supplier: {asset.get('supplier_name','—')} | "
-                    f"{asset.get('contact_person','—')} | {asset.get('supplier_phone','—')}  \n"
+                    f"Supplier: {asset.get('supplier_name','???')} | "
+                    f"{asset.get('contact_person','???')} | {asset.get('supplier_phone','???')}  \n"
                     "Do NOT repair locally. This call will be routed to System Administrator."
                 )
                 st.error(msg)
@@ -784,7 +778,7 @@ def _module_dashboard(mod, role):
     mid = mod["module_id"]
     mc  = mod["module_code"]
 
-    st.title(f"{mod['module_icon']} {mod['module_name']} — Dashboard")
+    st.title(f"{mod['module_icon']} {mod['module_name']} ??? Dashboard")
     st.caption(f"Your role: **{role}**")
 
     # Metrics
@@ -823,7 +817,7 @@ def _module_dashboard(mod, role):
             for c in calls:
                 st.markdown(
                     f"**{c['call_number']}** `{c['call_status']}`  \n"
-                    f"{c.get('unique_item_id','—')} | {c.get('dept_name','—')}"
+                    f"{c.get('unique_item_id','???')} | {c.get('dept_name','???')}"
                 )
         except Exception: pass
 
@@ -842,7 +836,7 @@ def _module_dashboard(mod, role):
             """,(mid,today,threshold))]
             if expiring:
                 for e in expiring:
-                    st.warning(f"`{e['unique_item_id']}` — expires {e['warranty_to'][:10]}")
+                    st.warning(f"`{e['unique_item_id']}` ??? expires {e['warranty_to'][:10]}")
             else:
                 st.success("No warranties expiring in 30 days.")
         except Exception: pass

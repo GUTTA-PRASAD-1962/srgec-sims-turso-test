@@ -176,6 +176,7 @@ def _tab_raise(user, role, mod, mid):
         WHERE item_id=? AND module_id=?
         AND call_status NOT IN ('FILE CLOSED','REJECTED')
     """, (item["item_id"], mid))
+    st.write(f"DEBUG active_call: {active_call}")
     if active_call:
         active_call = dict(active_call)
         st.error(

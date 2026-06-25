@@ -1,5 +1,5 @@
 """
-pages/common_inbox.py — Generic Complaint Inbox for ALL modules.
+pages/common_inbox.py - Generic Complaint Inbox for ALL modules.
 Workflow rules driven entirely from tbl_workflow_rules (no hardcoded statuses).
 Usage:
     from pages.common_inbox import show
@@ -42,14 +42,7 @@ def show(module_code):
     with tab3: _tab_register(user, role, mod, mid)
     with tab4: _tab_spare_indent(user, role, mod, mid)
 
-# ── helpers ──────────────────────────────────────────────────────────────────
 def _get_actions(mid, role, status, user=None, call=None):
-    """
-    Get available actions for role+status from DB rules.
-    For role 'HoD', additionally requires the acting user's dept_id to
-    match the complaint-raiser's dept_id (so the right department's HoD
-    sees the action, not every HoD in the institute).
-    """
     rules = [dict(r) for r in _fa("""
         SELECT * FROM tbl_workflow_rules
         WHERE module_id=? AND from_status=? AND is_active=1
@@ -78,7 +71,6 @@ def _get_actions(mid, role, status, user=None, call=None):
     return result
 
 def _get_role_statuses(mid, role):
-    """Get the list of statuses where this role has at least one available action."""
     if role == "SuperAdmin":
         rows = _fa(
             "SELECT DISTINCT from_status FROM tbl_workflow_rules "
@@ -95,7 +87,6 @@ def _get_role_statuses(mid, role):
     return list(set(dict(r)["from_status"] for r in rows))
 
 def _load_calls(mid, statuses=None, dept_id=None, search=None):
-    """Load complaints for a module with optional filters."""
     q = """
         SELECT c.*, i.unique_item_id, i.description AS item_desc,
                u.full_name AS raised_by_name, u.dept_id AS dept_id,
@@ -125,21 +116,19 @@ def _load_calls(mid, statuses=None, dept_id=None, search=None):
     return [dict(r) for r in rows]
 
 def _render_table(calls):
-    """Render a list of complaint dicts as a summary table."""
     if not calls:
         st.info("No complaints to display.")
         return
     df = pd.DataFrame([{
         "Call #": c.get("call_number", ""),
-        "Asset UID": c.get("unique_item_id", "—"),
-        "Department": c.get("dept_name", "—"),
+        "Asset UID": c.get("unique_item_id", "-"),
+        "Department": c.get("dept_name", "-"),
         "Status": c.get("call_status", ""),
-        "Raised By": c.get("raised_by_name", "—"),
-        "Assignee": c.get("assignee_name", "—"),
+        "Raised By": c.get("raised_by_name", "-"),
+        "Assignee": c.get("assignee_name", "-"),
     } for c in calls])
     st.dataframe(df, use_container_width=True, hide_index=True)
 
-# ══ TAB 1 — PENDING MY ACTION ══════════════════════════════════════════════
 def _tab_pending(user, role, mod, mid):
     role_statuses = _get_role_statuses(mid, role)
     if not role_statuses:
@@ -155,12 +144,11 @@ def _tab_pending(user, role, mod, mid):
     st.markdown(f"**{len(calls)} complaint(s) awaiting your action**")
     _render_table(calls)
     st.divider()
-    opts = {f"{c['call_number']} | {c.get('unique_item_id','—')} | {c['call_status']}": c
+    opts = {f"{c['call_number']} | {c.get('unique_item_id','-')} | {c['call_status']}": c
             for c in calls[:100]}
     sel  = st.selectbox("Select complaint:", list(opts.keys()), key=f"{mid}_pend_sel")
     _call_detail(opts[sel], user, role, mod, mid, ctx="pend")
 
-# ══ TAB 2 — RAISE COMPLAINT ════════════════════════════════════════════════
 def _tab_raise(user, role, mod, mid):
     st.subheader("Raise New Complaint")
     if st.session_state.get(f"_raise_msg_{mid}"):
@@ -181,7 +169,21 @@ def _tab_raise(user, role, mod, mid):
     """, (uid_input.strip(), mid))
     if not item: st.error("Asset not found in this module."); return
     item = dict(item)
-    st.success(f"{item['type_name']} — {item['description']} | {item.get('dept_name','—')} | Status: `{item['item_status']}`")
+    st.success(f"{item['type_name']} - {item['description']} | {item.get('dept_name','-')} | Status: {item['item_status']}")
+    # Check for existing active complaint on this asset
+    active_call = _fo("""
+        SELECT call_number, call_status FROM tbl_calls
+        WHERE item_id=? AND module_id=?
+        AND call_status NOT IN ('FILE CLOSED','REJECTED')
+    """, (item["item_id"], mid))
+    if active_call:
+        active_call = dict(active_call)
+        st.error(
+            f"Active complaint {active_call['call_number']} already exists "
+            f"for this asset (Status: {active_call['call_status']}). "
+            f"Please close or resolve it before raising a new one."
+        )
+        return
     complaint = st.text_area("Nature of Problem *", key=f"{mid}_raise_cmp", height=100,
                              placeholder="Describe the fault in detail...")
     photo = st.file_uploader("Attach Photo (optional)", type=["jpg","jpeg","png"], key=f"{mid}_raise_photo")
@@ -213,7 +215,6 @@ def _tab_raise(user, role, mod, mid):
             st.rerun()
         except Exception as ex: st.error(f"Failed: {ex}")
 
-# ══ TAB 3 — COMPLAINT REGISTER ═════════════════════════════════════════════
 def _tab_register(user, role, mod, mid):
     c1,c2 = st.columns(2)
     all_statuses = list(set(
@@ -230,12 +231,11 @@ def _tab_register(user, role, mod, mid):
     if not calls: st.info("None found."); return
     _render_table(calls)
     st.divider()
-    opts = {f"{c['call_number']} | {c.get('unique_item_id','—')} | {c['call_status']}": c
+    opts = {f"{c['call_number']} | {c.get('unique_item_id','-')} | {c['call_status']}": c
             for c in calls[:100]}
     sel  = st.selectbox("View details:", list(opts.keys()), key=f"{mid}_reg_sel")
     _call_detail(opts[sel], user, role, mod, mid, ctx="reg")
 
-# ══ TAB 4 — SPARE PARTS INDENT ═════════════════════════════════════════════
 def _tab_spare_indent(user, role, mod, mid):
     st.subheader("Spare Parts Indent")
     if st.session_state.get(f"_indent_msg_{mid}"):
@@ -291,8 +291,8 @@ def _indent_raise(user, role, mod, mid):
         except Exception as ex: st.error(f"Failed: {ex}")
 
 def _indent_pending(user, role, mod, mid):
-    """Read-only view of spare parts indents with active complaints.
-    All workflow actions are handled through Complaints → My Inbox → Pending My Action.
+    """Read-only view of spare parts indents.
+    All workflow actions are via Complaints -> My Inbox -> Pending My Action.
     """
     spare_statuses = [
         "PARTS NEEDED", "COST ESTIMATED", "HEAD-UPS BUDGET REVIEW",
@@ -304,7 +304,7 @@ def _indent_pending(user, role, mod, mid):
             calls = [c for c in calls if c.get("dept_id") == user.get("dept_id")]
     if not calls:
         st.info("No active spare parts indents."); return
-    opts = {f"{c['call_number']} | {c.get('unique_item_id','—')} | {c['call_status']}": c
+    opts = {f"{c['call_number']} | {c.get('unique_item_id','-')} | {c['call_status']}": c
             for c in calls}
     sel  = st.selectbox("Select complaint:", list(opts.keys()), key=f"{mid}_indp_sel")
     call = opts[sel]
@@ -327,8 +327,7 @@ def _indent_pending(user, role, mod, mid):
         st.info("No spare parts items raised for this complaint yet.")
     st.divider()
     st.info(
-        "ℹ️ To take action on this complaint (prepare cost estimate, approve budget, "
-        "raise PO, receive parts, etc.), go to **Complaints → My Inbox → Pending My Action**."
+        "To take action on this complaint, go to Complaints -> My Inbox -> Pending My Action."
     )
 
 def _indent_all(user, role, mod, mid):
@@ -349,29 +348,26 @@ def _indent_all(user, role, mod, mid):
     df = pd.DataFrame([{
         "ID":r["indent_id"],"Call #":r["call_number"],"Part":r["description"],
         "Qty":r["quantity"],"Total Rs.":r["total_cost"],"Status":r["indent_status"],
-        "Dept":r.get("dept_name","—"),"Prepared By":r.get("prepared_by",""),
+        "Dept":r.get("dept_name","-"),"Prepared By":r.get("prepared_by",""),
     } for r in rows])
     st.dataframe(df,use_container_width=True,hide_index=True)
     act_tot = sum(r["total_cost"] for r in active if r.get("total_cost"))
     can_tot = sum(r["total_cost"] for r in cancelled if r.get("total_cost"))
-    st.markdown(f"**Active Total: Rs.{act_tot:,.2f}** ({len(active)} indent(s))  \n"
-                f"*Cancelled: Rs.{can_tot:,.2f} ({len(cancelled)}) — excluded*")
+    st.markdown(f"**Active Total: Rs.{act_tot:,.2f}** ({len(active)} indent(s))")
 
-# ══ CALL DETAIL ═════════════════════════════════════════════════════════════
 def _call_detail(call, user, role, mod, mid, ctx=""):
     status = call["call_status"]
     k      = f"{mid}_{ctx}_{call['call_id']}_{status.replace(' ','_')}"
     st.markdown(f"### Call `{call['call_number']}`")
     c1,c2,c3 = st.columns(3)
-    c1.markdown(f"**Asset UID:** `{call.get('unique_item_id','—')}`")
-    c1.markdown(f"**Description:** {call.get('item_desc','—')}")
-    c2.markdown(f"**Department:** {call.get('dept_name','—')}")
+    c1.markdown(f"**Asset UID:** `{call.get('unique_item_id','-')}`")
+    c1.markdown(f"**Description:** {call.get('item_desc','-')}")
+    c2.markdown(f"**Department:** {call.get('dept_name','-')}")
     c2.markdown(f"**Raised by:** {call.get('raised_by_name','')}")
-    c3.markdown(f"**Status:** `{STATUS_ICON.get(status,'⚪')} {status}`")
+    c3.markdown(f"**Status:** `{STATUS_ICON.get(status,'?')} {status}`")
     if call.get("assignee_name"):
         c3.markdown(f"**Assignee:** {call['assignee_name']}")
     st.info(f"**Problem:** {call.get('complaint_text','')}")
-    # Spare Parts Indent — show when complaint is in budget/parts workflow
     spare_statuses = [
         "PARTS NEEDED","COST ESTIMATED","HEAD-UPS BUDGET REVIEW",
         "BUDGET REVIEW","BUDGET APPROVED","ON HOLD","PO RAISED","UNDER REPAIR"
@@ -382,18 +378,17 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
             (call["call_id"],))]
         if parts:
             st.divider()
-            st.markdown("#### 🔧 Spare Parts Indent")
+            st.markdown("#### Spare Parts Indent")
             df_parts = pd.DataFrame([{
                 "Part":        p["description"],
                 "Qty":         p["quantity"],
                 "Unit Rs.":    p["cost_per_unit"],
                 "Total Rs.":   p["total_cost"],
-                "Source":      p.get("source", "—"),
+                "Source":      p.get("source", "-"),
                 "Status":      p["indent_status"],
             } for p in parts])
             st.dataframe(df_parts, use_container_width=True, hide_index=True)
             st.markdown(f"**Grand Total: Rs.{sum(p['total_cost'] for p in parts):,.2f}**")
-    # Timeline
     steps = [dict(r) for r in _fa("""
         SELECT wl.*, u.full_name AS actor FROM tbl_call_workflow wl
         LEFT JOIN tbl_users u ON u.user_id=wl.action_by
@@ -402,8 +397,8 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
     if steps:
         with st.expander("Timeline", expanded=False):
             for s in steps:
-                st.markdown(f"**{s['action_at'][:16]}** — **{s['actor']}** "
-                            f"`{s['from_status']}` → `{s['to_status']}`  \n"
+                st.markdown(f"**{s['action_at'][:16]}** - **{s['actor']}** "
+                            f"`{s['from_status']}` -> `{s['to_status']}`  \n"
                             f"*{s.get('action_comment','') or ''}*")
     if status in ("FILE CLOSED","REJECTED"): return
     st.divider()
@@ -413,7 +408,7 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
     st.markdown("### Take Action")
     sel_action = st.selectbox("Select Action",list(actions.keys()),key=f"ua_{k}")
     rule       = actions[sel_action]
-    st.caption(f"`{status}` → `{rule['to_status']}`")
+    st.caption(f"`{status}` -> `{rule['to_status']}`")
     comment_required = bool(rule.get("requires_comment"))
     comment_label = "Comments *" if comment_required else "Comments (optional)"
     comment = st.text_area(comment_label,key=f"uc_{k}",height=70)
@@ -452,7 +447,7 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
                              (call.get("item_id"),))
             conn.commit(); conn.close()
             st.session_state[f"_inbox_msg_{mid}"] = ("s",
-                f"{sel_action} — Status: **{new_status}**")
+                f"{sel_action} - Status: **{new_status}**")
             st.rerun()
         except Exception as ex:
             st.error(f"Action failed: {ex}")

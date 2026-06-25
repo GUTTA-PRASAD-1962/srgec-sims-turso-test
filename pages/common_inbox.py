@@ -191,7 +191,8 @@ def _tab_raise(user, role, mod, mid):
     if st.button("Submit Complaint", type="primary", key=f"{mid}_raise_submit"):
         if not complaint.strip(): st.error("Describe the complaint."); return
         try:
-            count   = dict(_fo("SELECT COUNT(*) c FROM tbl_calls WHERE module_id=?",(mid,)) or {"c":0})["c"]
+            count   = dict(_fo("SELECT COALESCE(MAX(call_id),0) c FROM tbl_calls WHERE module_id=?",(mid,)) or {"c":0})["c"]
+            call_no = f"{mod['module_code']}-CALL-{count+1:04d}"
             call_no = f"{mod['module_code']}-CALL-{count+1:04d}"
             photo_path = save_scan(photo, call_no) if photo else None
             _now = _ist().strftime("%Y-%m-%d %H:%M:%S")

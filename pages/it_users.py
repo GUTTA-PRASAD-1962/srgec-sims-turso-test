@@ -2,7 +2,8 @@
 import streamlit as st
 import bcrypt
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
+def _ist(): return (datetime.utcnow() + timedelta(hours=5, minutes=30))
 from db import repository as repo
 from db.connection import get_conn, fetchall as _fa, fetchone as _fo
 from utils.auth import current_user, require_role
@@ -93,7 +94,7 @@ def show():
         if c1.button("📥 Download DB Backup", type="primary", key="dl_db"):
             p = Path(DB_PATH)
             if p.exists():
-                ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                ts = _ist().strftime("%Y%m%d_%H%M%S")
                 fname = f"iims_backup_{ts}.db"
                 st.download_button(f"💾 Save {fname}", p.read_bytes(),
                                    file_name=fname,
@@ -316,7 +317,7 @@ def _tab_role_matrix(user):
             """,(sel_role,sel_sub,
                  1 if v_view else 0, 1 if v_add else 0, 1 if v_edit else 0,
                  1 if v_del else 0, 1 if v_appr else 0, 1 if v_vis else 0,
-                 datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                 _ist().strftime("%Y-%m-%d %H:%M:%S")))
             conn.commit(); conn.close()
             st.success(f"Privileges saved for {sel_role} → {sel_sub}.")
             st.rerun()
@@ -409,7 +410,7 @@ def _tab_user_privileges(user):
             """,(uid2, u_row2["role_name"], sel_sub,
                  1 if v_view else 0, 1 if v_add else 0, 1 if v_edit else 0,
                  1 if v_del else 0, 1 if v_appr else 0, 1 if v_vis else 0,
-                 user["user_id"], datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                 user["user_id"], _ist().strftime("%Y-%m-%d %H:%M:%S")))
             conn.commit(); conn.close()
             st.success(f"Override saved for {u_row2['full_name']} → {sel_sub}.")
             st.rerun()
@@ -447,7 +448,7 @@ def _tab_user_privileges(user):
                     VALUES (?,?,?,?,?,?,?,?,?,?,?)
                 """,(uid3,role3,rp["sub_module"],rp["can_view"],rp["can_add"],
                      rp["can_edit"],rp["can_delete"],rp["can_approve"],rp["is_visible"],
-                     user["user_id"],datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                     user["user_id"],_ist().strftime("%Y-%m-%d %H:%M:%S")))
                 count += 1
             conn.commit(); conn.close()
             st.success(f"{count} privileges copied to {u_row3['full_name']}.")
@@ -458,7 +459,7 @@ def _tab_user_privileges(user):
 def _apply_all_role_defaults():
     """Apply default role privileges for all roles and all sub-modules."""
     conn = get_conn()
-    now  = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now  = _ist().strftime("%Y-%m-%d %H:%M:%S")
     for role_n, defaults in ROLE_DEFAULTS.items():
         visible_subs = ROLE_VISIBLE.get(role_n, [])
         for sub in IT_SUB_MODULES:
@@ -484,7 +485,7 @@ def _apply_role_defaults_to_user(user_id, role_name):
         "SELECT * FROM tbl_role_privileges WHERE role_name=?", (role_name,))]
     if not role_privs: return
     conn = get_conn()
-    now  = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now  = _ist().strftime("%Y-%m-%d %H:%M:%S")
     for rp in role_privs:
         conn.execute("""
             INSERT OR REPLACE INTO tbl_user_privileges

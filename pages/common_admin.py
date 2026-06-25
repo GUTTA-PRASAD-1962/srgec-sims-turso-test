@@ -9,7 +9,8 @@ Usage:
 import streamlit as st
 import pandas as pd
 import hashlib
-from datetime import datetime
+from datetime import datetime, timedelta
+def _ist(): return (datetime.utcnow() + timedelta(hours=5, minutes=30))
 from db.connection import fetchall as _fa, fetchone as _fo, get_conn
 from utils.auth import current_user, require_module_access
 from utils.helpers import export_df
@@ -123,7 +124,7 @@ def show_users(module_code):
             if c1.button("📥 Download DB Backup", type="primary", key=f"{mid}_db_backup"):
                 p = Path(DB_PATH)
                 if p.exists():
-                    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    ts = _ist().strftime("%Y%m%d_%H%M%S")
                     st.download_button(
                         f"💾 Save sims_backup_{ts}.db", p.read_bytes(),
                         file_name=f"sims_backup_{ts}.db",
@@ -316,12 +317,12 @@ def show_users(module_code):
                         VALUES (?,?,?,?,?,?,?,1,?)
                     """,(username.strip(),hashlib.sha256(password.encode()).hexdigest(),
                          full_name.strip(),emp_id.strip(),dm[dept_sel],email,phone,
-                         datetime.now().strftime("%Y-%m-%d %H:%M:%S"))).lastrowid
+                         _ist().strftime("%Y-%m-%d %H:%M:%S"))).lastrowid
                     conn.execute("""
                         INSERT OR REPLACE INTO tbl_user_module_access
                             (user_id,module_id,role_name,is_active,granted_at)
                         VALUES (?,(SELECT module_id FROM tbl_modules WHERE module_code=?),?,1,?)
-                    """,(uid,module_code,role_sel,datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                    """,(uid,module_code,role_sel,_ist().strftime("%Y-%m-%d %H:%M:%S")))
                     conn.commit(); conn.close()
                     st.success(f"User '{username}' created with role '{role_sel}'.")
                     st.rerun()
@@ -342,7 +343,7 @@ def show_users(module_code):
                     INSERT OR REPLACE INTO tbl_user_module_access
                         (user_id,module_id,role_name,is_active,granted_at)
                     VALUES (?,(SELECT module_id FROM tbl_modules WHERE module_code=?),?,1,?)
-                """,(uid,module_code,sel_r,datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                """,(uid,module_code,sel_r,_ist().strftime("%Y-%m-%d %H:%M:%S")))
                 conn.commit(); st.success("Access granted."); st.rerun()
             except Exception as ex: st.error(str(ex))
             finally: conn.close()
@@ -558,7 +559,7 @@ def show_role_matrix(module_code):
                             (module_id,role_name,sub_module,privilege,is_allowed,updated_at)
                         VALUES (?,?,?,?,?,?)
                     """,(mid,sel_role,sel_sub,priv,1 if val else 0,
-                         datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                         _ist().strftime("%Y-%m-%d %H:%M:%S")))
                 conn.commit(); conn.close()
                 st.success(f"Privileges saved for {sel_role} on {sel_sub}.")
                 st.rerun()
@@ -591,7 +592,7 @@ def show_role_matrix(module_code):
                                     (module_id,role_name,sub_module,privilege,is_allowed,updated_at)
                                 VALUES (?,?,?,?,?,?)
                             """,(mid,role_n,sub,priv,1 if val else 0,
-                                 datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                                 _ist().strftime("%Y-%m-%d %H:%M:%S")))
                             count += 1
                 conn.commit(); conn.close()
                 st.success(f"Default matrix applied — {count} privilege records saved.")
@@ -739,7 +740,7 @@ def show_role_matrix(module_code):
             """,(module_code,sel_role,sel_sub,
                  1 if v_view else 0, 1 if v_add else 0, 1 if v_edit else 0,
                  1 if v_del else 0, 1 if v_appr else 0, 1 if v_vis else 0,
-                 datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                 _ist().strftime("%Y-%m-%d %H:%M:%S")))
             conn.commit(); conn.close()
             st.success(f"Saved: {sel_role} → {sel_sub}"); st.rerun()
 
@@ -822,7 +823,7 @@ def show_user_privileges(module_code):
             """,(uid2,module_code,sel_sub,
                  1 if v_view else 0, 1 if v_add else 0, 1 if v_edit else 0,
                  1 if v_del else 0, 1 if v_appr else 0, 1 if v_vis else 0,
-                 user_obj.get("user_id"),datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                 user_obj.get("user_id"),_ist().strftime("%Y-%m-%d %H:%M:%S")))
             conn.commit(); conn.close()
             st.success(f"Override saved for {u_row2['full_name']} → {sel_sub}"); st.rerun()
         if c2.button("🗑 Remove Override", key=f"up_rem2_{module_code}"):
@@ -853,7 +854,7 @@ def show_user_privileges(module_code):
                 """,(u_row3["user_id"],module_code,rp["sub_module"],
                      rp["can_view"],rp["can_add"],rp["can_edit"],rp["can_delete"],
                      rp["can_approve"],rp["is_visible"],
-                     user_obj.get("user_id"),datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                     user_obj.get("user_id"),_ist().strftime("%Y-%m-%d %H:%M:%S")))
             conn.commit(); conn.close()
             st.success(f"Defaults copied to {u_row3['full_name']}."); st.rerun()
 
@@ -861,7 +862,7 @@ def show_user_privileges(module_code):
 def _apply_role_defaults(module_code):
     """Apply default role privileges for all roles and sub-modules."""
     conn = get_conn()
-    now  = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now  = _ist().strftime("%Y-%m-%d %H:%M:%S")
     for role_n, defaults in ROLE_DEFAULTS.items():
         visible_subs = ROLE_VISIBLE.get(role_n, [])
         for sub in SIMS_SUB_MODULES:

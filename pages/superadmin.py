@@ -2,7 +2,8 @@
 import streamlit as st
 import pandas as pd
 import hashlib, json
-from datetime import datetime
+from datetime import datetime, timedelta
+def _ist(): return (datetime.utcnow() + timedelta(hours=5, minutes=30))
 from db.connection import fetchall as _fa, fetchone as _fo, get_conn
 from utils.auth import current_user
 
@@ -72,7 +73,7 @@ def _users():
             conn=get_conn()
             try:
                 conn.execute("INSERT INTO tbl_users (username,password_hash,full_name,employee_id,dept_id,is_super_admin,is_active,created_at) VALUES (?,?,?,?,?,?,1,?)",
-                             (uname,hashlib.sha256(upwd.encode()).hexdigest(),ufull,uemp,dm[udept],1 if usa else 0,datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                             (uname,hashlib.sha256(upwd.encode()).hexdigest(),ufull,uemp,dm[udept],1 if usa else 0,_ist().strftime("%Y-%m-%d %H:%M:%S")))
                 conn.commit(); st.success(f"User '{ufull}' created."); st.rerun()
             except Exception as e: st.error(str(e))
             finally: conn.close()
@@ -89,7 +90,7 @@ def _users():
         conn=get_conn()
         try:
             conn.execute("INSERT OR REPLACE INTO tbl_user_module_access (user_id,module_id,role_name,is_active,granted_at) VALUES (?,?,?,1,?)",
-                         (uid,mid,sel_r,datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                         (uid,mid,sel_r,_ist().strftime("%Y-%m-%d %H:%M:%S")))
             conn.commit(); st.success("Access granted."); st.rerun()
         except Exception as e: st.error(str(e))
         finally: conn.close()

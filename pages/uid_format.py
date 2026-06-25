@@ -9,7 +9,8 @@ Configurable components: MOD, DEPT, MM, YYYY, TYPE, SEQ
 """
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
+def _ist(): return (datetime.utcnow() + timedelta(hours=5, minutes=30))
 from db.connection import fetchall as _fa, fetchone as _fo, get_conn
 from utils.auth import current_user, require_module_access
 
@@ -40,7 +41,7 @@ def _ensure_table():
             seq_digits  INTEGER NOT NULL DEFAULT 5,
             is_active   INTEGER DEFAULT 1,
             updated_by  INTEGER,
-            updated_at  TEXT DEFAULT (datetime('now','localtime'))
+            updated_at  TEXT DEFAULT (datetime('now','+5 hours','+30 minutes'))
         )
     """)
     conn.commit()
@@ -195,7 +196,7 @@ def show(module_code=None):
                 VALUES (?,?,?,1,?,?)
             """,(",".join(new_fmt["components"]), new_fmt["separator"],
                  new_fmt["seq_digits"], user.get("user_id"),
-                 datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                 _ist().strftime("%Y-%m-%d %H:%M:%S")))
             conn.commit(); conn.close()
             st.session_state["_uidfmt_msg"] = (
                 "s", f"✅ UID format updated! New format: `{sample}`. "
@@ -213,7 +214,7 @@ def show(module_code=None):
                 VALUES (?,?,?,1,?,?)
             """,(",".join(DEFAULT_FORMAT["components"]), DEFAULT_FORMAT["separator"],
                  DEFAULT_FORMAT["seq_digits"], user.get("user_id"),
-                 datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                 _ist().strftime("%Y-%m-%d %H:%M:%S")))
             conn.commit(); conn.close()
             st.session_state["_uidfmt_msg"] = (
                 "s", f"Reset to default format: `{build_sample_uid(DEFAULT_FORMAT)}`"

@@ -407,7 +407,7 @@ def _indent_pending(user, role, mod, mid):
                 new_s = "PARTS ORDERED"
                 try:
                     conn=get_conn()
-                    conn.execute("UPDATE tbl_spare_indent SET indent_status='AUTHORIZED',authorized_by=?,authorized_at=datetime('now','localtime') WHERE call_id=?",
+                    conn.execute("UPDATE tbl_spare_indent SET indent_status='AUTHORIZED',authorized_by=?,authorized_at=datetime('now','+5 hours','+30 minutes') WHERE call_id=?",
                                  (user["user_id"],call["call_id"]))
                     conn.commit(); conn.close()
                     _update_call_status(call["call_id"],user["user_id"],"PARTS NEEDED",
@@ -438,7 +438,7 @@ def _indent_pending(user, role, mod, mid):
             if not recv.strip(): st.error("Note required."); return
             try:
                 conn=get_conn()
-                conn.execute("UPDATE tbl_spare_indent SET indent_status='PROCURED',procured_at=datetime('now','localtime') WHERE call_id=?",(call["call_id"],))
+                conn.execute("UPDATE tbl_spare_indent SET indent_status='PROCURED',procured_at=datetime('now','+5 hours','+30 minutes') WHERE call_id=?",(call["call_id"],))
                 conn.execute("UPDATE tbl_calls SET call_status='UNDER REPAIR' WHERE call_id=?",(call["call_id"],))
                 conn.commit(); conn.close()
                 _update_call_status(call["call_id"],user["user_id"],"PARTS ORDERED",

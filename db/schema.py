@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS tbl_users (
     is_active     INTEGER DEFAULT 1,
     is_super_admin INTEGER DEFAULT 0,
     last_login    TEXT,
-    created_at    TEXT DEFAULT (datetime('now','localtime'))
+    created_at    TEXT DEFAULT (datetime('now','+5 hours','+30 minutes'))
 );
 
 CREATE TABLE IF NOT EXISTS tbl_user_module_access (
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS tbl_user_module_access (
     module_id  INTEGER NOT NULL REFERENCES tbl_modules(module_id),
     role_name  TEXT NOT NULL,
     is_active  INTEGER DEFAULT 1,
-    granted_at TEXT DEFAULT (datetime('now','localtime')),
+    granted_at TEXT DEFAULT (datetime('now','+5 hours','+30 minutes')),
     UNIQUE(user_id, module_id, role_name)
 );
 
@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS tbl_invoices (
     received_by     INTEGER REFERENCES tbl_users(user_id),
     remarks         TEXT,
     invoice_scan_path TEXT,
-    created_at      TEXT DEFAULT (datetime('now','localtime'))
+    created_at      TEXT DEFAULT (datetime('now','+5 hours','+30 minutes'))
 );
 
 CREATE TABLE IF NOT EXISTS tbl_items (
@@ -134,7 +134,7 @@ CREATE TABLE IF NOT EXISTS tbl_items (
                               'UNDER MAINTENANCE','CONDEMNED','DISPOSED')),
     is_deleted     INTEGER DEFAULT 0,
     created_by     INTEGER REFERENCES tbl_users(user_id),
-    created_at     TEXT DEFAULT (datetime('now','localtime'))
+    created_at     TEXT DEFAULT (datetime('now','+5 hours','+30 minutes'))
 );
 
 CREATE TABLE IF NOT EXISTS tbl_item_field_values (
@@ -154,7 +154,7 @@ CREATE TABLE IF NOT EXISTS tbl_stock_register (
     qty_received  INTEGER DEFAULT 0,
     qty_issued    INTEGER DEFAULT 0,
     cost_per_unit REAL DEFAULT 0,
-    entry_date    TEXT DEFAULT (datetime('now','localtime')),
+    entry_date    TEXT DEFAULT (datetime('now','+5 hours','+30 minutes')),
     remarks       TEXT
 );
 
@@ -167,7 +167,7 @@ CREATE TABLE IF NOT EXISTS tbl_dept_stock (
     description   TEXT NOT NULL,
     qty_received  INTEGER DEFAULT 0,
     cost_per_unit REAL DEFAULT 0,
-    entry_date    TEXT DEFAULT (datetime('now','localtime')),
+    entry_date    TEXT DEFAULT (datetime('now','+5 hours','+30 minutes')),
     remarks       TEXT
 );
 
@@ -196,7 +196,7 @@ CREATE TABLE IF NOT EXISTS tbl_calls (
     call_status     TEXT NOT NULL DEFAULT 'OPEN',
     current_assignee INTEGER REFERENCES tbl_users(user_id),
     photo_path      TEXT,
-    created_at      TEXT DEFAULT (datetime('now','localtime'))
+    created_at      TEXT DEFAULT (datetime('now','+5 hours','+30 minutes'))
 );
 
 CREATE TABLE IF NOT EXISTS tbl_call_workflow (
@@ -208,7 +208,7 @@ CREATE TABLE IF NOT EXISTS tbl_call_workflow (
     from_status     TEXT NOT NULL,
     to_status       TEXT NOT NULL,
     attachment_path TEXT,
-    action_at       TEXT DEFAULT (datetime('now','localtime'))
+    action_at       TEXT DEFAULT (datetime('now','+5 hours','+30 minutes'))
 );
 
 CREATE TABLE IF NOT EXISTS tbl_spare_indent (
@@ -226,7 +226,7 @@ CREATE TABLE IF NOT EXISTS tbl_spare_indent (
     procured_at   TEXT,
     indent_status TEXT DEFAULT 'PENDING'
         CHECK(indent_status IN ('PENDING','AUTHORIZED','PROCURED','CANCELLED')),
-    created_at    TEXT DEFAULT (datetime('now','localtime'))
+    created_at    TEXT DEFAULT (datetime('now','+5 hours','+30 minutes'))
 );
 
 CREATE TABLE IF NOT EXISTS tbl_maintenance (
@@ -245,7 +245,7 @@ CREATE TABLE IF NOT EXISTS tbl_maintenance (
     verified_by       INTEGER REFERENCES tbl_users(user_id),
     next_service_date TEXT,
     remarks           TEXT,
-    created_at        TEXT DEFAULT (datetime('now','localtime'))
+    created_at        TEXT DEFAULT (datetime('now','+5 hours','+30 minutes'))
 );
 
 CREATE TABLE IF NOT EXISTS tbl_asset_movement (
@@ -258,7 +258,7 @@ CREATE TABLE IF NOT EXISTS tbl_asset_movement (
     from_location_id INTEGER REFERENCES tbl_locations(location_id),
     to_location_id   INTEGER REFERENCES tbl_locations(location_id),
     purpose       TEXT,
-    moved_at      TEXT DEFAULT (datetime('now','localtime'))
+    moved_at      TEXT DEFAULT (datetime('now','+5 hours','+30 minutes'))
 );
 
 CREATE TABLE IF NOT EXISTS tbl_amc (
@@ -273,7 +273,7 @@ CREATE TABLE IF NOT EXISTS tbl_amc (
     amc_amount     REAL DEFAULT 0,
     terms          TEXT,
     is_active      INTEGER DEFAULT 1,
-    created_at     TEXT DEFAULT (datetime('now','localtime'))
+    created_at     TEXT DEFAULT (datetime('now','+5 hours','+30 minutes'))
 );
 
 CREATE TABLE IF NOT EXISTS tbl_proc_forward (
@@ -292,7 +292,7 @@ CREATE TABLE IF NOT EXISTS tbl_proc_forward (
     correction_remarks TEXT,
     invoice_scan_path  TEXT,
     revision_count  INTEGER DEFAULT 0,
-    created_at      TEXT DEFAULT (datetime('now','localtime'))
+    created_at      TEXT DEFAULT (datetime('now','+5 hours','+30 minutes'))
 );
 
 CREATE TABLE IF NOT EXISTS tbl_stationery_indent (
@@ -311,7 +311,7 @@ CREATE TABLE IF NOT EXISTS tbl_stationery_indent (
     issued_by     INTEGER REFERENCES tbl_users(user_id),
     issued_at     TEXT,
     remarks       TEXT,
-    created_at    TEXT DEFAULT (datetime('now','localtime'))
+    created_at    TEXT DEFAULT (datetime('now','+5 hours','+30 minutes'))
 );
 
 CREATE TABLE IF NOT EXISTS tbl_notifications (
@@ -324,7 +324,7 @@ CREATE TABLE IF NOT EXISTS tbl_notifications (
     call_id     INTEGER REFERENCES tbl_calls(call_id),
     priority    TEXT DEFAULT 'NORMAL',
     is_read     INTEGER DEFAULT 0,
-    created_at  TEXT DEFAULT (datetime('now','localtime'))
+    created_at  TEXT DEFAULT (datetime('now','+5 hours','+30 minutes'))
 );
 
 CREATE TABLE IF NOT EXISTS tbl_audit (
@@ -335,7 +335,7 @@ CREATE TABLE IF NOT EXISTS tbl_audit (
     table_name TEXT,
     record_id  INTEGER,
     details    TEXT,
-    created_at TEXT DEFAULT (datetime('now','localtime'))
+    created_at TEXT DEFAULT (datetime('now','+5 hours','+30 minutes'))
 );
 
 CREATE TABLE IF NOT EXISTS tbl_role_privileges (
@@ -346,7 +346,7 @@ CREATE TABLE IF NOT EXISTS tbl_role_privileges (
     privilege  TEXT NOT NULL
         CHECK(privilege IN ('VIEW','ADD','EDIT','DELETE','APPROVE')),
     is_allowed INTEGER DEFAULT 0,
-    updated_at TEXT DEFAULT (datetime('now','localtime')),
+    updated_at TEXT DEFAULT (datetime('now','+5 hours','+30 minutes')),
     UNIQUE(module_id, role_name, sub_module, privilege)
 );
 
@@ -361,7 +361,7 @@ CREATE TABLE IF NOT EXISTS tbl_role_module_privileges (
     can_delete INTEGER DEFAULT 0,
     can_approve INTEGER DEFAULT 0,
     is_visible INTEGER DEFAULT 1,
-    updated_at TEXT DEFAULT (datetime('now','localtime')),
+    updated_at TEXT DEFAULT (datetime('now','+5 hours','+30 minutes')),
     UNIQUE(module_code, role_name, sub_module)
 );
 
@@ -377,7 +377,7 @@ CREATE TABLE IF NOT EXISTS tbl_user_module_privileges (
     can_approve INTEGER DEFAULT 0,
     is_visible INTEGER DEFAULT 1,
     granted_by INTEGER REFERENCES tbl_users(user_id),
-    updated_at TEXT DEFAULT (datetime('now','localtime')),
+    updated_at TEXT DEFAULT (datetime('now','+5 hours','+30 minutes')),
     UNIQUE(user_id, module_code, sub_module)
 );
 
@@ -390,7 +390,7 @@ CREATE TABLE IF NOT EXISTS tbl_sims_role_permissions (
     can_insert  INTEGER DEFAULT 0,
     can_update  INTEGER DEFAULT 0,
     can_delete  INTEGER DEFAULT 0,
-    updated_at  TEXT DEFAULT (datetime('now','localtime')),
+    updated_at  TEXT DEFAULT (datetime('now','+5 hours','+30 minutes')),
     UNIQUE(module_code, role_name, sub_module)
 );
 """

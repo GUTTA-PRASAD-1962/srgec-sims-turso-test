@@ -1,7 +1,8 @@
 """pages/mod_stat.py — Stationery module (indent only, no maintenance)"""
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
+def _ist(): return (datetime.utcnow() + timedelta(hours=5, minutes=30))
 from db.connection import fetchall as _fa, fetchone as _fo, get_conn
 from utils.auth import current_user, require_module_access
 from utils.helpers import export_df
@@ -62,7 +63,7 @@ def show_module():
 def _raise(user, role):
     st.subheader("Raise Stationery Indent")
     count = dict(_fo("SELECT COUNT(*) c FROM tbl_stationery_indent") or {"c":0})["c"]
-    indent_no = f"STAT-{datetime.now().strftime('%Y%m')}-{count+1:04d}"
+    indent_no = f"STAT-{_ist().strftime('%Y%m')}-{count+1:04d}"
 
     depts = [dict(r) for r in _fa("SELECT * FROM tbl_departments WHERE is_active=1 ORDER BY dept_name")]
     if not depts: st.warning("No departments configured."); return
@@ -129,8 +130,8 @@ def _pending(user, role):
                     conn.execute("""UPDATE tbl_stationery_indent SET indent_status='ISSUED',
                         approved_by=?,approved_at=?,issued_by=?,issued_at=?,remarks=COALESCE(?,remarks)
                         WHERE indent_id=?""",
-                        (user["user_id"],datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                         user["user_id"],datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        (user["user_id"],_ist().strftime("%Y-%m-%d %H:%M:%S"),
+                         user["user_id"],_ist().strftime("%Y-%m-%d %H:%M:%S"),
                          appr_rem or None,r["indent_id"]))
                     conn.commit(); conn.close()
                     st.session_state["_stat_msg"] = ("s","Approved and issued."); st.rerun()
@@ -138,7 +139,7 @@ def _pending(user, role):
                     conn=get_conn()
                     conn.execute("""UPDATE tbl_stationery_indent SET indent_status='REJECTED',
                         approved_by=?,approved_at=? WHERE indent_id=?""",
-                        (user["user_id"],datetime.now().strftime("%Y-%m-%d %H:%M:%S"),r["indent_id"]))
+                        (user["user_id"],_ist().strftime("%Y-%m-%d %H:%M:%S"),r["indent_id"]))
                     conn.commit(); conn.close()
                     st.session_state["_stat_msg"] = ("s","Rejected."); st.rerun()
 

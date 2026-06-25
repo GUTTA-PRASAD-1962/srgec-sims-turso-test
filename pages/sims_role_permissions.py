@@ -7,7 +7,8 @@ Matrix view: Roles × Sub-Modules × Actions (View/Insert/Update/Delete)
 """
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
+def _ist(): return (datetime.utcnow() + timedelta(hours=5, minutes=30))
 
 SUB_MODULES = [
     "Inventory — Asset Search & Edit",
@@ -312,7 +313,7 @@ def _edit_by_module(module_code, user, fetchall, fetchone, execute):
 
     st.markdown("---")
     if st.button("💾 Save Sub-Module Permissions", type="primary", key=f"ebm_save_{module_code}"):
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        now = _ist().strftime("%Y-%m-%d %H:%M:%S")
         import sqlite3
         from config import DB_PATH
         conn = sqlite3.connect(DB_PATH)
@@ -338,7 +339,7 @@ def _edit_by_module(module_code, user, fetchall, fetchone, execute):
 # HELPERS
 # ══════════════════════════════════════════════════════════════════
 def _save_permissions(module_code, role_name, new_values, execute):
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now = _ist().strftime("%Y-%m-%d %H:%M:%S")
     for sub, vals in new_values.items():
         execute("""
             INSERT INTO tbl_sims_role_permissions
@@ -354,7 +355,7 @@ def _save_permissions(module_code, role_name, new_values, execute):
 
 
 def _reset_defaults(module_code, role_name, execute):
-    now      = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now      = _ist().strftime("%Y-%m-%d %H:%M:%S")
     defaults = ROLE_DEFAULTS.get(role_name, {s:{"can_view":1,"can_insert":0,"can_update":0,"can_delete":0} for s in SUB_MODULES})
     restricted = RESTRICTED.get(role_name, [])
     none_ = {"can_view":0,"can_insert":0,"can_update":0,"can_delete":0}
@@ -376,7 +377,7 @@ def _reset_defaults(module_code, role_name, execute):
 def _apply_all_defaults(module_code, role_names, fetchall):
     import sqlite3
     from config import DB_PATH
-    now  = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now  = _ist().strftime("%Y-%m-%d %H:%M:%S")
     none_= {"can_view":0,"can_insert":0,"can_update":0,"can_delete":0}
     conn = sqlite3.connect(DB_PATH)
     for rn in role_names:

@@ -1,17 +1,16 @@
 """
 pages/common_inbox.py — Generic Complaint Inbox for ALL modules.
 Workflow rules driven entirely from tbl_workflow_rules (no hardcoded statuses).
-
 Usage:
     from pages.common_inbox import show
     show(MODULE_CODE)
 """
 import streamlit as st
 import pandas as pd
+from datetime import datetime, timedelta
 from db.connection import fetchall as _fa, fetchone as _fo, get_conn
 from utils.auth import current_user, require_module_access
 from utils.helpers import format_date, save_scan
-
 
 STATUS_ICON = {
     "OPEN":"🟡","UNDER REVIEW":"🔵","FORWARDED":"🔵","ASSIGNED":"🟠",
@@ -19,6 +18,8 @@ STATUS_ICON = {
     "REPAIRED":"🟢","VERIFIED":"🟢","CLOSED":"✅","FILE CLOSED":"✅","REJECTED":"❌"
 }
 
+def _ist():
+    return datetime.utcnow() + timedelta(hours=5, minutes=30)
 
 def show(module_code):
     role = require_module_access(module_code)
@@ -27,11 +28,9 @@ def show(module_code):
     if not mod: st.error("Module not found."); return
     mod  = dict(mod)
     mid  = mod["module_id"]
-
     if st.session_state.get(f"_inbox_msg_{mid}"):
         t, m = st.session_state.pop(f"_inbox_msg_{mid}")
         (st.success if t=="s" else st.error)(m)
-
     tab1,tab2,tab3,tab4 = st.tabs([
         "Pending My Action",
         "Raise Complaint",
@@ -43,8 +42,7 @@ def show(module_code):
     with tab3: _tab_register(user, role, mod, mid)
     with tab4: _tab_spare_indent(user, role, mod, mid)
 
-
-# ── helpers ──────────────────────────────────────────────────────
+# ── helpers ──────────────────────────────────────────────────────────────────
 def _get_actions(mid, role, status, user=None, call=None):
     """
     Get available actions for role+status from DB rules.
@@ -57,17 +55,13 @@ def _get_actions(mid, role, status, user=None, call=None):
         WHERE module_id=? AND from_status=? AND is_active=1
         ORDER BY sort_order
     """,(mid, status))]
-
-    # Determine the complaint's originating department (via raised_by user)
     call_dept_id = None
     if call:
         raiser = _fo("SELECT dept_id FROM tbl_users WHERE user_id=?",
                       (call.get("raised_by"),))
         if raiser:
             call_dept_id = dict(raiser).get("dept_id")
-
     user_dept_id = user.get("dept_id") if user else None
-
     result = {}
     for r in rules:
         allowed = [r2.strip() for r2 in r["allowed_roles"].split(",")]
@@ -82,7 +76,6 @@ def _get_actions(mid, role, status, user=None, call=None):
                 continue
         result[r["action_label"]] = r
     return result
-
 
 def _get_role_statuses(mid, role):
     """Get the list of statuses where this role has at least one available action."""
@@ -102,13 +95,7 @@ def _get_role_statuses(mid, role):
     return list(set(dict(r)["from_status"] for r in rows))
 
 def _load_calls(mid, statuses=None, dept_id=None, search=None):
-    """
-    Load complaints (tbl_calls) for a module, with optional filters:
-      statuses  - list of call_status values to include
-      dept_id   - filter to complaints raised by users in this department
-      search    - substring match on call_number or unique_item_id
-    Returns a list of dicts with joined item/department/user info.
-    """
+    """Load complaints for a module with optional filters."""
     q = """
         SELECT c.*, i.unique_item_id, i.description AS item_desc,
                u.full_name AS raised_by_name, u.dept_id AS dept_id,
@@ -122,30 +109,23 @@ def _load_calls(mid, statuses=None, dept_id=None, search=None):
         WHERE c.module_id = ?
     """
     params = [mid]
-
     if statuses:
         placeholders = ",".join(["?"] * len(statuses))
         q += f" AND c.call_status IN ({placeholders})"
         params.extend(statuses)
-
     if dept_id:
         q += " AND u.dept_id = ?"
         params.append(dept_id)
-
     if search:
         q += " AND (c.call_number LIKE ? OR i.unique_item_id LIKE ?)"
         s = f"%{search}%"
         params.extend([s, s])
-
     q += " ORDER BY c.call_id DESC"
-
     rows = _fa(q, tuple(params))
     return [dict(r) for r in rows]
 
-
 def _render_table(calls):
     """Render a list of complaint dicts as a summary table."""
-    import pandas as pd
     if not calls:
         st.info("No complaints to display.")
         return
@@ -159,49 +139,38 @@ def _render_table(calls):
     } for c in calls])
     st.dataframe(df, use_container_width=True, hide_index=True)
 
-
-# ══ TAB 1 — PENDING MY ACTION ════════════════════════════════════
+# ══ TAB 1 — PENDING MY ACTION ══════════════════════════════════════════════
 def _tab_pending(user, role, mod, mid):
     role_statuses = _get_role_statuses(mid, role)
     if not role_statuses:
         st.info(f"No pending actions configured for role '{role}'."); return
-
     calls = _load_calls(mid, statuses=role_statuses)
-
-    # Filter by dept for non-admins
     if role == "HoD":
         dept_id = user.get("dept_id")
         if dept_id: calls = [c for c in calls if c.get("dept_id") == dept_id]
     if role == "Technician":
         calls = [c for c in calls if c.get("current_assignee") == user["user_id"]]
-
     if not calls:
         st.success("No complaints pending your action."); return
-
     st.markdown(f"**{len(calls)} complaint(s) awaiting your action**")
     _render_table(calls)
     st.divider()
-
     opts = {f"{c['call_number']} | {c.get('unique_item_id','—')} | {c['call_status']}": c
             for c in calls[:100]}
     sel  = st.selectbox("Select complaint:", list(opts.keys()), key=f"{mid}_pend_sel")
     _call_detail(opts[sel], user, role, mod, mid, ctx="pend")
 
-
-# ══ TAB 2 — RAISE COMPLAINT ══════════════════════════════════════
+# ══ TAB 2 — RAISE COMPLAINT ════════════════════════════════════════════════
 def _tab_raise(user, role, mod, mid):
     st.subheader("Raise New Complaint")
-
     if st.session_state.get(f"_raise_msg_{mid}"):
         t,m = st.session_state.pop(f"_raise_msg_{mid}")
         (st.success if t=="s" else st.error)(m)
-
     uid_input = st.text_input("Asset UID *",
                               placeholder=f"e.g. {mod['module_code']}_CSE_06_2026_UPS_00001",
                               key=f"{mid}_raise_uid")
     if not uid_input.strip():
         st.info("Enter the Asset UID to raise a complaint."); return
-
     item = _fo("""
         SELECT i.*, it.type_name, d.dept_name, l.location_name
         FROM tbl_items i
@@ -210,21 +179,19 @@ def _tab_raise(user, role, mod, mid):
         LEFT JOIN tbl_locations l ON l.location_id=i.location_id
         WHERE i.unique_item_id=? AND i.module_id=?
     """, (uid_input.strip(), mid))
-
     if not item: st.error("Asset not found in this module."); return
     item = dict(item)
     st.success(f"{item['type_name']} — {item['description']} | {item.get('dept_name','—')} | Status: `{item['item_status']}`")
-
     complaint = st.text_area("Nature of Problem *", key=f"{mid}_raise_cmp", height=100,
                              placeholder="Describe the fault in detail...")
     photo = st.file_uploader("Attach Photo (optional)", type=["jpg","jpeg","png"], key=f"{mid}_raise_photo")
-
     if st.button("Submit Complaint", type="primary", key=f"{mid}_raise_submit"):
         if not complaint.strip(): st.error("Describe the complaint."); return
         try:
             count   = dict(_fo("SELECT COUNT(*) c FROM tbl_calls WHERE module_id=?",(mid,)) or {"c":0})["c"]
             call_no = f"{mod['module_code']}-CALL-{count+1:04d}"
             photo_path = save_scan(photo, call_no) if photo else None
+            _now = _ist().strftime("%Y-%m-%d %H:%M:%S")
             conn = get_conn()
             conn.execute("""
                 INSERT INTO tbl_calls (module_id,call_number,item_id,raised_by,dept_id,
@@ -234,60 +201,50 @@ def _tab_raise(user, role, mod, mid):
                  item.get("location_id"),complaint.strip(),photo_path))
             call_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
             conn.execute("""
-                INSERT INTO tbl_call_workflow (call_id,action_by,action_type,action_comment,from_status,to_status)
-                VALUES (?,?,'Complaint Raised',?,'NONE','OPEN')
-            """,(call_id,user["user_id"],complaint.strip()))
+                INSERT INTO tbl_call_workflow (call_id,action_by,action_type,action_comment,from_status,to_status,action_at)
+                VALUES (?,?,'Complaint Raised',?,'NONE','OPEN',?)
+            """,(call_id,user["user_id"],complaint.strip(),_now))
             conn.execute("""
-                INSERT INTO tbl_call_workflow (call_id,action_by,action_type,action_comment,from_status,to_status)
-                VALUES (?,?,'Forward to Dept HoD',?,'OPEN','DEPT REVIEW')
-            """,(call_id,user["user_id"],complaint.strip()))
+                INSERT INTO tbl_call_workflow (call_id,action_by,action_type,action_comment,from_status,to_status,action_at)
+                VALUES (?,?,'Forward to Dept HoD',?,'OPEN','DEPT REVIEW',?)
+            """,(call_id,user["user_id"],complaint.strip(),_now))
             conn.commit(); conn.close()
             st.session_state[f"_raise_msg_{mid}"] = ("s", f"Complaint {call_no} raised.")
             st.rerun()
         except Exception as ex: st.error(f"Failed: {ex}")
 
-
-# ══ TAB 3 — COMPLAINT REGISTER ═══════════════════════════════════
+# ══ TAB 3 — COMPLAINT REGISTER ═════════════════════════════════════════════
 def _tab_register(user, role, mod, mid):
     c1,c2 = st.columns(2)
-    # Build status list from workflow rules + static closed statuses
     all_statuses = list(set(
         dict(r)["from_status"] for r in _fa(
             "SELECT DISTINCT from_status FROM tbl_workflow_rules WHERE module_id=?",(mid,))
     )) + ["FILE CLOSED","REJECTED"]
     status_f = c1.selectbox("Status",["All"]+sorted(set(all_statuses)),key=f"{mid}_reg_status")
     search   = c2.text_input("Search Call # / Asset UID",key=f"{mid}_reg_search")
-
     statuses = None if status_f=="All" else [status_f]
     dept_id  = user.get("dept_id") if role not in ("SuperAdmin","SysAdmin","Coordinator") else None
     calls    = _load_calls(mid, statuses=statuses, dept_id=dept_id,
                            search=search.strip() or None)
-
     st.caption(f"{len(calls)} complaint(s)")
     if not calls: st.info("None found."); return
     _render_table(calls)
     st.divider()
-
     opts = {f"{c['call_number']} | {c.get('unique_item_id','—')} | {c['call_status']}": c
             for c in calls[:100]}
     sel  = st.selectbox("View details:", list(opts.keys()), key=f"{mid}_reg_sel")
     _call_detail(opts[sel], user, role, mod, mid, ctx="reg")
 
-
-# ══ TAB 4 — SPARE PARTS INDENT ═══════════════════════════════════
+# ══ TAB 4 — SPARE PARTS INDENT ═════════════════════════════════════════════
 def _tab_spare_indent(user, role, mod, mid):
     st.subheader("Spare Parts Indent")
-
     if st.session_state.get(f"_indent_msg_{mid}"):
         t,m = st.session_state.pop(f"_indent_msg_{mid}")
         (st.success if t=="s" else st.error)(m)
-
     sub1,sub2,sub3 = st.tabs(["Raise Indent","Pending Action","All Indents"])
-
     with sub1: _indent_raise(user, role, mod, mid)
     with sub2: _indent_pending(user, role, mod, mid)
     with sub3: _indent_all(user, role, mod, mid)
-
 
 def _indent_raise(user, role, mod, mid):
     call_no = st.text_input("Call Number *",key=f"{mid}_ind_cno",
@@ -333,13 +290,10 @@ def _indent_raise(user, role, mod, mid):
             st.rerun()
         except Exception as ex: st.error(f"Failed: {ex}")
 
-
 def _indent_pending(user, role, mod, mid):
     """Read-only view of spare parts indents with active complaints.
-    All workflow actions (cost estimate, budget approval, PO, etc.)
-    are handled through Complaints → My Inbox → Pending My Action.
+    All workflow actions are handled through Complaints → My Inbox → Pending My Action.
     """
-    # Show indents for complaints currently in the spares workflow
     spare_statuses = [
         "PARTS NEEDED", "COST ESTIMATED", "HEAD-UPS BUDGET REVIEW",
         "BUDGET REVIEW", "BUDGET APPROVED", "ON HOLD", "PO RAISED", "UNDER REPAIR"
@@ -350,18 +304,14 @@ def _indent_pending(user, role, mod, mid):
             calls = [c for c in calls if c.get("dept_id") == user.get("dept_id")]
     if not calls:
         st.info("No active spare parts indents."); return
-
     opts = {f"{c['call_number']} | {c.get('unique_item_id','—')} | {c['call_status']}": c
             for c in calls}
     sel  = st.selectbox("Select complaint:", list(opts.keys()), key=f"{mid}_indp_sel")
     call = opts[sel]
-
     st.markdown(f"**Call:** `{call['call_number']}` | **Status:** `{call['call_status']}`")
-
     parts = [dict(r) for r in _fa(
         "SELECT * FROM tbl_spare_indent WHERE call_id=? ORDER BY indent_id",
         (call["call_id"],))]
-
     if parts:
         df = pd.DataFrame([{
             "Part":        p["description"],
@@ -375,78 +325,11 @@ def _indent_pending(user, role, mod, mid):
         st.markdown(f"**Grand Total: Rs.{sum(p['total_cost'] for p in parts):,.2f}**")
     else:
         st.info("No spare parts items raised for this complaint yet.")
-
     st.divider()
     st.info(
         "ℹ️ To take action on this complaint (prepare cost estimate, approve budget, "
         "raise PO, receive parts, etc.), go to **Complaints → My Inbox → Pending My Action**."
     )
-
-    # Actions based on call status
-    status = call["call_status"]
-    if role in ("SuperAdmin","SysAdmin") and status=="PARTS NEEDED":
-        note = st.text_area("Budget note for HoD *",key=f"{mid}_indp_note",height=80)
-        if st.button("Forward to HoD",type="primary",key=f"{mid}_indp_fwd"):
-            if not note.strip(): st.error("Note required."); return
-            try:
-                _update_call_status(call["call_id"],user["user_id"],"PARTS NEEDED",
-                                    "Budget Proposal Forwarded to HoD",note.strip())
-                st.session_state[f"_indent_msg_{mid}"] = ("s","Forwarded to HoD.")
-                st.rerun()
-            except Exception as ex: st.error(str(ex))
-
-    elif role in ("HoD",) and status=="PARTS NEEDED":
-        dec = st.radio("Decision",[
-            "Budget Available — Approve",
-            "Budget Not Available — Reject"
-        ],key=f"{mid}_indp_dec")
-        rem = st.text_area("Remarks *",key=f"{mid}_indp_rem",height=60)
-        if st.button("Submit Decision",type="primary",key=f"{mid}_indp_sub"):
-            if not rem.strip(): st.error("Remarks required."); return
-            if "Approve" in dec:
-                new_s = "PARTS ORDERED"
-                try:
-                    conn=get_conn()
-                    conn.execute("UPDATE tbl_spare_indent SET indent_status='AUTHORIZED',authorized_by=?,authorized_at=datetime('now','+5 hours','+30 minutes') WHERE call_id=?",
-                                 (user["user_id"],call["call_id"]))
-                    conn.commit(); conn.close()
-                    _update_call_status(call["call_id"],user["user_id"],"PARTS NEEDED",
-                                        "Budget Approved by HoD",rem.strip())
-                    conn=get_conn()
-                    conn.execute("UPDATE tbl_calls SET call_status='PARTS ORDERED' WHERE call_id=?",(call["call_id"],))
-                    conn.commit(); conn.close()
-                    st.session_state[f"_indent_msg_{mid}"] = ("s","Budget approved.")
-                    st.rerun()
-                except Exception as ex: st.error(str(ex))
-            else:
-                try:
-                    conn=get_conn()
-                    conn.execute("UPDATE tbl_spare_indent SET indent_status='CANCELLED' WHERE call_id=?",(call["call_id"],))
-                    conn.commit(); conn.close()
-                    _update_call_status(call["call_id"],user["user_id"],"PARTS NEEDED",
-                                        "Budget Rejected",rem.strip())
-                    conn=get_conn()
-                    conn.execute("UPDATE tbl_calls SET call_status='ASSIGNED' WHERE call_id=?",(call["call_id"],))
-                    conn.commit(); conn.close()
-                    st.session_state[f"_indent_msg_{mid}"] = ("s","Rejected.")
-                    st.rerun()
-                except Exception as ex: st.error(str(ex))
-
-    elif role in ("SuperAdmin","SysAdmin") and status=="PARTS ORDERED":
-        recv = st.text_area("Receiving note *",key=f"{mid}_indp_recv",height=60)
-        if st.button("Parts Received — Hand Over",type="primary",key=f"{mid}_indp_recv_btn"):
-            if not recv.strip(): st.error("Note required."); return
-            try:
-                conn=get_conn()
-                conn.execute("UPDATE tbl_spare_indent SET indent_status='PROCURED',procured_at=datetime('now','+5 hours','+30 minutes') WHERE call_id=?",(call["call_id"],))
-                conn.execute("UPDATE tbl_calls SET call_status='UNDER REPAIR' WHERE call_id=?",(call["call_id"],))
-                conn.commit(); conn.close()
-                _update_call_status(call["call_id"],user["user_id"],"PARTS ORDERED",
-                                    "Parts Received — Hand Over",recv.strip())
-                st.session_state[f"_indent_msg_{mid}"] = ("s","Parts handed over. Status → UNDER REPAIR.")
-                st.rerun()
-            except Exception as ex: st.error(str(ex))
-
 
 def _indent_all(user, role, mod, mid):
     rows = [dict(r) for r in _fa("""
@@ -474,12 +357,10 @@ def _indent_all(user, role, mod, mid):
     st.markdown(f"**Active Total: Rs.{act_tot:,.2f}** ({len(active)} indent(s))  \n"
                 f"*Cancelled: Rs.{can_tot:,.2f} ({len(cancelled)}) — excluded*")
 
-
-# ══ CALL DETAIL ═══════════════════════════════════════════════════
+# ══ CALL DETAIL ═════════════════════════════════════════════════════════════
 def _call_detail(call, user, role, mod, mid, ctx=""):
     status = call["call_status"]
     k      = f"{mid}_{ctx}_{call['call_id']}_{status.replace(' ','_')}"
-
     st.markdown(f"### Call `{call['call_number']}`")
     c1,c2,c3 = st.columns(3)
     c1.markdown(f"**Asset UID:** `{call.get('unique_item_id','—')}`")
@@ -490,7 +371,6 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
     if call.get("assignee_name"):
         c3.markdown(f"**Assignee:** {call['assignee_name']}")
     st.info(f"**Problem:** {call.get('complaint_text','')}")
-
     # Spare Parts Indent — show when complaint is in budget/parts workflow
     spare_statuses = [
         "PARTS NEEDED","COST ESTIMATED","HEAD-UPS BUDGET REVIEW",
@@ -513,7 +393,6 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
             } for p in parts])
             st.dataframe(df_parts, use_container_width=True, hide_index=True)
             st.markdown(f"**Grand Total: Rs.{sum(p['total_cost'] for p in parts):,.2f}**")
-
     # Timeline
     steps = [dict(r) for r in _fa("""
         SELECT wl.*, u.full_name AS actor FROM tbl_call_workflow wl
@@ -526,15 +405,11 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
                 st.markdown(f"**{s['action_at'][:16]}** — **{s['actor']}** "
                             f"`{s['from_status']}` → `{s['to_status']}`  \n"
                             f"*{s.get('action_comment','') or ''}*")
-
     if status in ("FILE CLOSED","REJECTED"): return
     st.divider()
-
-    # Get available actions
     actions = _get_actions(mid, role, status, user=user, call=call)
     if not actions:
         st.info(f"No actions available for **{role}** on status **{status}**."); return
-
     st.markdown("### Take Action")
     sel_action = st.selectbox("Select Action",list(actions.keys()),key=f"ua_{k}")
     rule       = actions[sel_action]
@@ -542,10 +417,8 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
     comment_required = bool(rule.get("requires_comment"))
     comment_label = "Comments *" if comment_required else "Comments (optional)"
     comment = st.text_area(comment_label,key=f"uc_{k}",height=70)
-
     assignee_id = None
     if rule.get("requires_assignee"):
-        # Get technicians for this module
         techs = [dict(r) for r in _fa("""
             SELECT u.user_id, u.full_name FROM tbl_users u
             JOIN tbl_user_module_access a ON a.user_id=u.user_id
@@ -556,7 +429,6 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
             t_opts = {t["full_name"]: t["user_id"] for t in techs}
             pick   = st.selectbox("Assign Technician *",list(t_opts.keys()),key=f"ut_{k}")
             assignee_id = t_opts[pick]
-
     if st.button(f"{sel_action}",type="primary",key=f"usub_{k}"):
         if comment_required and not comment.strip():
             st.error("Comments required for this action.")
@@ -569,11 +441,12 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
                     current_assignee=COALESCE(?,current_assignee)
                 WHERE call_id=?
             """,(new_status,assignee_id,call["call_id"]))
+            _now = _ist().strftime("%Y-%m-%d %H:%M:%S")
             conn.execute("""
                 INSERT INTO tbl_call_workflow
-                    (call_id,action_by,action_type,action_comment,from_status,to_status)
-                VALUES (?,?,?,?,?,?)
-            """,(call["call_id"],user["user_id"],sel_action,comment.strip(),status,new_status))
+                    (call_id,action_by,action_type,action_comment,from_status,to_status,action_at)
+                VALUES (?,?,?,?,?,?,?)
+            """,(call["call_id"],user["user_id"],sel_action,comment.strip(),status,new_status,_now))
             if new_status == "FILE CLOSED":
                 conn.execute("UPDATE tbl_items SET item_status='WORKING' WHERE item_id=?",
                              (call.get("item_id"),))
@@ -584,11 +457,11 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
         except Exception as ex:
             st.error(f"Action failed: {ex}")
 
-
 def _update_call_status(call_id, user_id, from_status, action_type, comment):
+    _now = _ist().strftime("%Y-%m-%d %H:%M:%S")
     conn = get_conn()
     conn.execute("""
-        INSERT INTO tbl_call_workflow (call_id,action_by,action_type,action_comment,from_status,to_status)
-        VALUES (?,?,?,?,?,?)
-    """,(call_id,user_id,action_type,comment,from_status,from_status))
+        INSERT INTO tbl_call_workflow (call_id,action_by,action_type,action_comment,from_status,to_status,action_at)
+        VALUES (?,?,?,?,?,?,?)
+    """,(call_id,user_id,action_type,comment,from_status,from_status,_now))
     conn.commit(); conn.close()

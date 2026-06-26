@@ -401,6 +401,26 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
     if call.get("assignee_name"):
         c3.markdown(f"**Assignee:** {call['assignee_name']}")
     st.info(f"**Problem:** {call.get('complaint_text','')}")
+
+    # Show most recent action prominently
+    last_action = _fo("""
+        SELECT wl.action_type, wl.action_comment, wl.action_at,
+               u.full_name AS actor
+        FROM tbl_call_workflow wl
+        LEFT JOIN tbl_users u ON u.user_id=wl.action_by
+        WHERE wl.call_id=?
+        ORDER BY wl.action_at DESC LIMIT 1
+    """, (call["call_id"],))
+    if last_action:
+        la = dict(last_action)
+        if la.get("action_comment") and la["action_comment"] != call.get("complaint_text",""):
+            st.markdown(
+                f"**Last Action:** `{la['action_type']}` by **{la.get('actor','-')}** "
+                f"on {str(la.get('action_at',''))[:16]}  
+"
+                f"> {la['action_comment']}"
+            )
+
     spare_statuses = [
         "PARTS NEEDED","COST ESTIMATED","HEAD-UPS BUDGET REVIEW",
         "BUDGET REVIEW","BUDGET APPROVED","ON HOLD","PO RAISED","UNDER REPAIR"

@@ -319,13 +319,20 @@ def _role_mgmt():
             st.warning(f"Role '{new_role_name.strip()}' already exists in the system.")
         else:
             new_r = new_role_name.strip()
-            st.success(f"Role name **'{new_r}'** is ready to use.")
-            st.info(
-                f"Next steps to activate **'{new_r}'**:\n"
-                f"1. Go to **Administration → User Management** → Edit a user → set their Module Role to **'{new_r}'**\n"
-                f"2. Go to **Super Admin → Workflow Rules** → add **'{new_r}'** to the allowed_roles of relevant workflow steps\n"
-                f"3. Optionally go to **Administration → Role & Privileges** → configure what this role can see"
-            )
+            try:
+                conn = get_conn()
+                conn.execute("INSERT OR IGNORE INTO tbl_sims_roles (role_name, is_system) VALUES (?, 0)", (new_r,))
+                conn.commit(); conn.close()
+                st.success(f"Role **'{new_r}'** registered successfully.")
+                st.info(
+                    f"Next steps to activate **'{new_r}'**:\n"
+                    f"1. Go to **Administration → User Management** → assign this role to a user\n"
+                    f"2. Go to **Super Admin → Workflow Rules** → add **'{new_r}'** to relevant workflow steps\n"
+                    f"3. Optionally configure Role & Privileges for this role"
+                )
+                st.rerun()
+            except Exception as ex:
+                st.error(f"Failed: {ex}")
 
     st.divider()
     st.markdown("#### Rename a Role")

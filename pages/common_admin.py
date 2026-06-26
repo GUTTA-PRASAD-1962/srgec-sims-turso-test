@@ -197,9 +197,7 @@ def show_users(module_code):
                     WHERE a.user_id=? AND m.module_code=?
                 """,(eu["user_id"], module_code))
                 cur_role_name = dict(cur_role)["role_name"] if cur_role else "User"
-                _fixed = ["SuperAdmin","SysAdmin","HoD","HEAD-UPS","Coordinator","Technician","Lab-IC","User"]
-                _dyn = [dict(r)["role_name"] for r in _fa("SELECT DISTINCT role_name FROM tbl_user_module_access ORDER BY role_name")]
-                role_options = _fixed + [r for r in _dyn if r not in _fixed]
+                role_options = [dict(r)["role_name"] for r in _fa("SELECT role_name FROM tbl_sims_roles ORDER BY is_system DESC, role_name")]
 
                 with st.form(f"edit_user_form_{mid}"):
                     fn   = st.text_input("Full Name",  eu["full_name"])
@@ -299,7 +297,7 @@ def show_users(module_code):
             emp_id  = u4.text_input("Employee ID *")
             u5,u6   = st.columns(2)
             role_sel= u5.selectbox("Module Role *",
-                                    (lambda f,d: f+[r for r in d if r not in f])(["SysAdmin","HoD","HEAD-UPS","Coordinator","Technician","Lab-IC","User"],[dict(r)["role_name"] for r in _fa("SELECT DISTINCT role_name FROM tbl_user_module_access ORDER BY role_name")]))
+                                    [dict(r)["role_name"] for r in _fa("SELECT role_name FROM tbl_sims_roles WHERE role_name != 'SuperAdmin' ORDER BY is_system DESC, role_name")])
             dept_sel= u6.selectbox("Department", list(dm.keys()))
             u7,u8   = st.columns(2)
             email   = u7.text_input("Email")
@@ -335,9 +333,8 @@ def show_users(module_code):
         g1,g2,g3 = st.columns(3)
         all_u = [dict(r) for r in _fa("SELECT user_id,full_name,username FROM tbl_users WHERE is_active=1 ORDER BY full_name")]
         sel_u = g1.selectbox("User",[f"{u['full_name']} ({u['username']})" for u in all_u],key=f"{mid}_ga_user")
-        _ga_base = ["SysAdmin","HoD","HEAD-UPS","Coordinator","Technician","Lab-IC","User"]
-        _ga_dyn = [dict(r)["role_name"] for r in _fa("SELECT DISTINCT role_name FROM tbl_user_module_access ORDER BY role_name")]
-        sel_r = g2.selectbox("Role", _ga_base + [r for r in _ga_dyn if r not in _ga_base], key=f"{mid}_ga_role")
+        _ga_roles = [dict(r)["role_name"] for r in _fa("SELECT role_name FROM tbl_sims_roles WHERE role_name != 'SuperAdmin' ORDER BY is_system DESC, role_name")]
+        sel_r = g2.selectbox("Role", _ga_roles, key=f"{mid}_ga_role")
         if g3.button("✅ Grant Access", key=f"{mid}_ga_save"):
             idx = [f"{u['full_name']} ({u['username']})" for u in all_u].index(sel_u)
             uid = all_u[idx]["user_id"]

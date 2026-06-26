@@ -762,8 +762,8 @@ def _category_summary(mod, mid):
     rows = [dict(r) for r in _fa("""
         SELECT it.type_name,
                COUNT(*) AS total,
-               SUM(CASE WHEN i.item_status="WORKING" THEN 1 ELSE 0 END) AS working,
-               SUM(CASE WHEN i.item_status!="WORKING" THEN 1 ELSE 0 END) AS faulty,
+               SUM(CASE WHEN i.item_status='WORKING' THEN 1 ELSE 0 END) AS working,
+               SUM(CASE WHEN i.item_status!='WORKING' THEN 1 ELSE 0 END) AS faulty,
                SUM(i.cost_per_unit) AS total_value
         FROM tbl_items i
         JOIN tbl_item_types it ON it.type_id=i.type_id

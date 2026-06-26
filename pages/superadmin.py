@@ -305,6 +305,44 @@ def _role_mgmt():
     c3.markdown("**In Privileges**\n" + "\n".join(f"- {r}" for r in roles_privs))
 
     st.divider()
+    st.markdown("#### Register New Role")
+    st.caption("Define a new role name. Once registered, assign it to users via User Management and add it to workflow rules.")
+    new_role_name = st.text_input("New Role Name *", key="sa_nr_name",
+                                   placeholder="e.g. Electrical Coordinator")
+    sel_modules = st.multiselect("Apply to Modules (creates default privilege entries)",
+                                  [dict(r)["module_name"] for r in _fa("SELECT module_name FROM tbl_modules ORDER BY sort_order")],
+                                  key="sa_nr_modules")
+    if st.button("Register Role", type="primary", key="sa_nr_submit"):
+        if not new_role_name.strip():
+            st.error("Role name is required.")
+        elif new_role_name.strip() in all_roles:
+            st.warning(f"Role '{new_role_name.strip()}' already exists.")
+        else:
+            try:
+                if sel_modules:
+                    conn = get_conn()
+                    mods = [dict(r) for r in _fa("SELECT module_id, module_name FROM tbl_modules")]
+                    mod_map = {m["module_name"]: m["module_id"] for m in mods}
+                    sub_modules = [dict(r)["sub_module"] for r in _fa(
+                        "SELECT DISTINCT sub_module FROM tbl_role_module_privileges LIMIT 20")]
+                    for mod_name in sel_modules:
+                        mod_id = mod_map.get(mod_name)
+                        if not mod_id: continue
+                        for sub in sub_modules:
+                            try:
+                                conn.execute("""
+                                    INSERT OR IGNORE INTO tbl_role_module_privileges
+                                    (module_id, role_name, sub_module, privilege, is_allowed)
+                                    VALUES (?, ?, ?, 'VIEW', 0)
+                                """, (mod_id, new_role_name.strip(), sub))
+                            except: pass
+                    conn.commit(); conn.close()
+                st.success(f"Role '{new_role_name.strip()}' registered. Assign it to users via User Management.")
+                st.rerun()
+            except Exception as ex:
+                st.error(f"Failed: {ex}")
+
+    st.divider()
     st.markdown("#### Rename a Role")
     old_role = st.selectbox("Select role to rename", all_roles, key="sa_rr_old")
     new_role = st.text_input("New role name *", key="sa_rr_new",

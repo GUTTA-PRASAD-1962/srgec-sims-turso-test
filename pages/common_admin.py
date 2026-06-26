@@ -345,7 +345,7 @@ def show_users(module_code):
                         (user_id,module_id,role_name,is_active,granted_at)
                     VALUES (?,(SELECT module_id FROM tbl_modules WHERE module_code=?),?,1,?)
                 """,(uid,module_code,sel_r,_ist().strftime("%Y-%m-%d %H:%M:%S")))
-                conn.commit(); st.success("Access granted."); st.rerun()
+                conn.commit(); st.session_state[f"_admin_msg_{mid}"] = ("s","Access granted successfully."); st.rerun()
             except Exception as ex: st.error(str(ex))
             finally: conn.close()
 

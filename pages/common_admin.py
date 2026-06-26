@@ -145,209 +145,162 @@ def show_users(module_code):
                 if stats:
                     st.dataframe(pd.DataFrame(stats),use_container_width=True,hide_index=True)
 
-    tab1, tab2 = st.tabs(["👀 All Users", "➕ Create User"])
+with tab1:
+    # Show users with module access
+    users = [dict(r) for r in _fa("""
+        SELECT u.user_id, u.full_name, u.username, u.employee_id,
+               a.role_name, d.dept_name, u.email, u.phone,
+               u.is_active, u.last_login
+        FROM tbl_user_module_access a
+        JOIN tbl_users u ON u.user_id=a.user_id
+        JOIN tbl_modules m ON m.module_id=a.module_id
+        LEFT JOIN tbl_departments d ON d.dept_id=u.dept_id
+        WHERE m.module_code=? AND a.is_active=1
+        ORDER BY u.full_name
+    """,(module_code,))]
 
-    with tab1:
-        # Show users with module access
-        users = [dict(r) for r in _fa("""
-            SELECT u.user_id, u.full_name, u.username, u.employee_id,
-                   a.role_name, d.dept_name, u.email, u.phone,
-                   u.is_active, u.last_login
-            FROM tbl_user_module_access a
-            JOIN tbl_users u ON u.user_id=a.user_id
-            JOIN tbl_modules m ON m.module_id=a.module_id
-            LEFT JOIN tbl_departments d ON d.dept_id=u.dept_id
-            WHERE m.module_code=? AND a.is_active=1
-            ORDER BY u.full_name
-        """,(module_code,))]
+    if users:
+        df = pd.DataFrame([{
+            "ID":u["user_id"],"Full Name":u["full_name"],"Username":u["username"],
+            "Emp ID":u["employee_id"],"Role":u["role_name"],
+            "Department":u.get("dept_name","—"),"Email":u.get("email","—"),
+            "Phone":u.get("phone","—"),
+            "Active":"Yes" if u["is_active"] else "No",
+            "Last Login":str(u.get("last_login",""))[:16],
+        } for u in users])
+        st.dataframe(df, use_container_width=True, hide_index=True)
+    else:
+        st.info("No users assigned to this module yet.")
 
-        if users:
-            df = pd.DataFrame([{
-                "ID":u["user_id"],"Full Name":u["full_name"],"Username":u["username"],
-                "Emp ID":u["employee_id"],"Role":u["role_name"],
-                "Department":u.get("dept_name","—"),"Email":u.get("email","—"),
-                "Phone":u.get("phone","—"),
-                "Active":"Yes" if u["is_active"] else "No",
-                "Last Login":str(u.get("last_login",""))[:16],
-            } for u in users])
-            st.dataframe(df, use_container_width=True, hide_index=True)
-        else:
-            st.info("No users assigned to this module yet.")
+    st.divider()
+    st.subheader("✏️ Edit User")
+    all_users = [dict(r) for r in _fa("SELECT user_id,full_name,username FROM tbl_users WHERE is_active=1 ORDER BY full_name")]
+    uid_opts  = {f"{u['full_name']} ({u['username']})": u["user_id"] for u in all_users}
+    sel_edit  = st.selectbox("Select User to Edit", list(uid_opts.keys()), key=f"{mid}_eu_sel")
+    if st.button("Load User", key=f"{mid}_eu_load"):
+        st.session_state[f"edit_uid_{mid}"] = uid_opts[sel_edit]
 
-        st.divider()
-        st.subheader("✏️ Edit User")
-        all_users = [dict(r) for r in _fa("SELECT user_id,full_name,username FROM tbl_users WHERE is_active=1 ORDER BY full_name")]
-        uid_opts  = {f"{u['full_name']} ({u['username']})": u["user_id"] for u in all_users}
-        sel_edit  = st.selectbox("Select User to Edit", list(uid_opts.keys()), key=f"{mid}_eu_sel")
-        if st.button("Load User", key=f"{mid}_eu_load"):
-            st.session_state[f"edit_uid_{mid}"] = uid_opts[sel_edit]
+    if f"edit_uid_{mid}" in st.session_state:
+        eu = _fo("SELECT u.*, d.dept_name FROM tbl_users u LEFT JOIN tbl_departments d ON d.dept_id=u.dept_id WHERE u.user_id=?",
+                 (st.session_state[f"edit_uid_{mid}"],))
+        if eu:
+            eu = dict(eu)
+            depts = [dict(r) for r in _fa("SELECT * FROM tbl_departments WHERE is_active=1 ORDER BY dept_name")]
+            dm    = {"(None)": None}; dm.update({d["dept_name"]: d["dept_id"] for d in depts})
 
-        if f"edit_uid_{mid}" in st.session_state:
-            eu = _fo("SELECT u.*, d.dept_name FROM tbl_users u LEFT JOIN tbl_departments d ON d.dept_id=u.dept_id WHERE u.user_id=?",
-                     (st.session_state[f"edit_uid_{mid}"],))
-            if eu:
-                eu = dict(eu)
-                depts = [dict(r) for r in _fa("SELECT * FROM tbl_departments WHERE is_active=1 ORDER BY dept_name")]
-                dm    = {"(None)": None}; dm.update({d["dept_name"]: d["dept_id"] for d in depts})
+            # Get current module role for this user
+            cur_role = _fo("""
+                SELECT role_name FROM tbl_user_module_access a
+                JOIN tbl_modules m ON m.module_id=a.module_id
+                WHERE a.user_id=? AND m.module_code=?
+            """,(eu["user_id"], module_code))
+            cur_role_name = dict(cur_role)["role_name"] if cur_role else "User"
+            role_options = [dict(r)["role_name"] for r in _fa("SELECT role_name FROM tbl_sims_roles ORDER BY is_system DESC, role_name")]
 
-                # Get current module role for this user
-                cur_role = _fo("""
-                    SELECT role_name FROM tbl_user_module_access a
-                    JOIN tbl_modules m ON m.module_id=a.module_id
-                    WHERE a.user_id=? AND m.module_code=?
-                """,(eu["user_id"], module_code))
-                cur_role_name = dict(cur_role)["role_name"] if cur_role else "User"
-                role_options = [dict(r)["role_name"] for r in _fa("SELECT role_name FROM tbl_sims_roles ORDER BY is_system DESC, role_name")]
+            with st.form(f"edit_user_form_{mid}"):
+                fn   = st.text_input("Full Name",  eu["full_name"])
+                r_sel= st.selectbox("Module Role", role_options,
+                                    index=role_options.index(cur_role_name) if cur_role_name in role_options else 6)
+                d_sel= st.selectbox("Department", list(dm.keys()),
+                                    index=list(dm.values()).index(eu.get("dept_id")) if eu.get("dept_id") in dm.values() else 0)
+                email= st.text_input("Email",  eu.get("email","") or "")
+                phone= st.text_input("Phone",  eu.get("phone","") or "")
+                act  = st.checkbox("Active", value=bool(eu["is_active"]))
+                npw  = st.text_input("New Password (leave blank to keep)", type="password")
+                if st.form_submit_button("💾 Save", type="primary"):
+                    conn = get_conn()
+                    try:
+                        conn.execute("""
+                            UPDATE tbl_users SET full_name=?,dept_id=?,email=?,phone=?,is_active=?
+                            WHERE user_id=?
+                        """,(fn, dm[d_sel], email, phone, 1 if act else 0, eu["user_id"]))
+                        conn.execute("""
+                            UPDATE tbl_user_module_access SET role_name=?
+                            WHERE user_id=? AND module_id=(SELECT module_id FROM tbl_modules WHERE module_code=?)
+                        """,(r_sel, eu["user_id"], module_code))
+                        if npw.strip():
+                            conn.execute("UPDATE tbl_users SET password_hash=? WHERE user_id=?",
+                                         (hashlib.sha256(npw.encode()).hexdigest(), eu["user_id"]))
+                        conn.commit(); conn.close()
+                        st.success("User updated.")
+                        del st.session_state[f"edit_uid_{mid}"]
+                        st.rerun()
+                    except Exception as ex: st.error(str(ex)); conn.close()
 
-                with st.form(f"edit_user_form_{mid}"):
-                    fn   = st.text_input("Full Name",  eu["full_name"])
-                    r_sel= st.selectbox("Module Role", role_options,
-                                        index=role_options.index(cur_role_name) if cur_role_name in role_options else 6)
-                    d_sel= st.selectbox("Department", list(dm.keys()),
-                                        index=list(dm.values()).index(eu.get("dept_id")) if eu.get("dept_id") in dm.values() else 0)
-                    email= st.text_input("Email",  eu.get("email","") or "")
-                    phone= st.text_input("Phone",  eu.get("phone","") or "")
-                    act  = st.checkbox("Active", value=bool(eu["is_active"]))
-                    npw  = st.text_input("New Password (leave blank to keep)", type="password")
-                    if st.form_submit_button("💾 Save", type="primary"):
-                        conn = get_conn()
-                        try:
-                            conn.execute("""
-                                UPDATE tbl_users SET full_name=?,dept_id=?,email=?,phone=?,is_active=?
-                                WHERE user_id=?
-                            """,(fn, dm[d_sel], email, phone, 1 if act else 0, eu["user_id"]))
-                            conn.execute("""
-                                UPDATE tbl_user_module_access SET role_name=?
-                                WHERE user_id=? AND module_id=(SELECT module_id FROM tbl_modules WHERE module_code=?)
-                            """,(r_sel, eu["user_id"], module_code))
-                            if npw.strip():
-                                conn.execute("UPDATE tbl_users SET password_hash=? WHERE user_id=?",
-                                             (hashlib.sha256(npw.encode()).hexdigest(), eu["user_id"]))
-                            conn.commit(); conn.close()
-                            st.success("User updated.")
-                            del st.session_state[f"edit_uid_{mid}"]
-                            st.rerun()
-                        except Exception as ex: st.error(str(ex)); conn.close()
-
-                st.markdown("---")
-                st.markdown("#### 🗑 Delete / Deactivate User")
-                if eu["user_id"] == user.get("user_id"):
-                    st.warning("You cannot delete or deactivate your own account.")
-                else:
-                    st.caption(
-                        "**Deactivate** disables login but keeps history (recommended). "
-                        "**Delete** permanently removes the user record and ALL their "
-                        "module access — only possible if no audit/asset records "
-                        "reference this user."
-                    )
-                    dcol1, dcol2 = st.columns(2)
-
-                    if eu["is_active"]:
-                        if dcol1.button("🚫 Deactivate User", key=f"{mid}_deact_user"):
-                            conn = get_conn()
-                            conn.execute("UPDATE tbl_users SET is_active=0 WHERE user_id=?",
-                                         (eu["user_id"],))
-                            conn.commit(); conn.close()
-                            st.success(f"User '{eu['username']}' deactivated.")
-                            st.rerun()
-                    else:
-                        if dcol1.button("✅ Reactivate User", key=f"{mid}_react_user"):
-                            conn = get_conn()
-                            conn.execute("UPDATE tbl_users SET is_active=1 WHERE user_id=?",
-                                         (eu["user_id"],))
-                            conn.commit(); conn.close()
-                            st.success(f"User '{eu['username']}' reactivated.")
-                            st.rerun()
-
-                    confirm_del = dcol2.checkbox(
-                        f"I confirm permanent deletion of '{eu['username']}'",
-                        key=f"{mid}_confirm_del_user"
-                    )
-                    if dcol2.button("🗑️ Delete Permanently", type="primary",
-                                    key=f"{mid}_del_user", disabled=not confirm_del):
-                        conn = get_conn()
-                        try:
-                            conn.execute("DELETE FROM tbl_user_module_access WHERE user_id=?",
-                                         (eu["user_id"],))
-                            conn.execute("DELETE FROM tbl_users WHERE user_id=?",
-                                         (eu["user_id"],))
-                            conn.commit(); conn.close()
-                            st.success(f"User '{eu['username']}' permanently deleted.")
-                            del st.session_state[f"edit_uid_{mid}"]
-                            st.rerun()
-                        except Exception as ex:
-                            conn.close()
-                            st.error(
-                                f"Cannot delete: {ex}. This user likely has "
-                                "linked records (assets, audit logs, complaints). "
-                                "Use **Deactivate** instead."
-                            )
-
-    with tab2:
-        depts = [dict(r) for r in _fa("SELECT * FROM tbl_departments WHERE is_active=1 ORDER BY dept_name")]
-        dm    = {"(None)": None}; dm.update({d["dept_name"]: d["dept_id"] for d in depts})
-
-        with st.form(f"create_user_form_{mid}"):
-            st.markdown("**New User Details**")
-            u1,u2   = st.columns(2)
-            username= u1.text_input("Username *")
-            password= u2.text_input("Password *", type="password")
-            u3,u4   = st.columns(2)
-            full_name=u3.text_input("Full Name *")
-            emp_id  = u4.text_input("Employee ID *")
-            u5,u6   = st.columns(2)
-            role_sel= u5.selectbox("Module Role *",
-                                    [dict(r)["role_name"] for r in _fa("SELECT role_name FROM tbl_sims_roles WHERE role_name != 'SuperAdmin' ORDER BY is_system DESC, role_name")])
-            dept_sel= u6.selectbox("Department", list(dm.keys()))
-            u7,u8   = st.columns(2)
-            email   = u7.text_input("Email")
-            phone   = u8.text_input("Phone")
-            submitted = st.form_submit_button("➕ Create User", type="primary",
-                                              use_container_width=True)
-
-        if submitted:
-            if not all([username.strip(),password.strip(),full_name.strip(),emp_id.strip()]):
-                st.error("Username, Password, Full Name and Employee ID are required.")
+            st.markdown("---")
+            st.markdown("#### 🗑 Delete / Deactivate User")
+            if eu["user_id"] == user.get("user_id"):
+                st.warning("You cannot delete or deactivate your own account.")
             else:
-                conn = get_conn()
-                try:
-                    uid = conn.execute("""
-                        INSERT INTO tbl_users (username,password_hash,full_name,employee_id,
-                            dept_id,email,phone,is_active,created_at)
-                        VALUES (?,?,?,?,?,?,?,1,?)
-                    """,(username.strip(),hashlib.sha256(password.encode()).hexdigest(),
-                         full_name.strip(),emp_id.strip(),dm[dept_sel],email,phone,
-                         _ist().strftime("%Y-%m-%d %H:%M:%S"))).lastrowid
-                    conn.execute("""
-                        INSERT OR REPLACE INTO tbl_user_module_access
-                            (user_id,module_id,role_name,is_active,granted_at)
-                        VALUES (?,(SELECT module_id FROM tbl_modules WHERE module_code=?),?,1,?)
-                    """,(uid,module_code,role_sel,_ist().strftime("%Y-%m-%d %H:%M:%S")))
-                    conn.commit(); conn.close()
-                    st.success(f"User '{username}' created with role '{role_sel}'.")
-                    st.rerun()
-                except Exception as ex: st.error(str(ex)); conn.close()
+                st.caption(
+                    "**Deactivate** disables login but keeps history (recommended). "
+                    "**Delete** permanently removes the user record and ALL their "
+                    "module access — only possible if no audit/asset records "
+                    "reference this user."
+                )
+                dcol1, dcol2 = st.columns(2)
 
-        st.divider()
-        st.markdown("**Grant Module Access to Existing User**")
-        g1,g2,g3 = st.columns(3)
-        all_u = [dict(r) for r in _fa("SELECT user_id,full_name,username FROM tbl_users WHERE is_active=1 ORDER BY full_name")]
-        sel_u = g1.selectbox("User",[f"{u['full_name']} ({u['username']})" for u in all_u],key=f"{mid}_ga_user")
-        _ga_roles = [dict(r)["role_name"] for r in _fa("SELECT role_name FROM tbl_sims_roles WHERE role_name != 'SuperAdmin' ORDER BY is_system DESC, role_name")]
-        sel_r = g2.selectbox("Role", _ga_roles, key=f"{mid}_ga_role")
-        if g3.button("✅ Grant Access", key=f"{mid}_ga_save"):
-            idx = [f"{u['full_name']} ({u['username']})" for u in all_u].index(sel_u)
-            uid = all_u[idx]["user_id"]
-            conn = get_conn()
-            try:
-                conn.execute("""
-                    INSERT OR REPLACE INTO tbl_user_module_access
-                        (user_id,module_id,role_name,is_active,granted_at)
-                    VALUES (?,(SELECT module_id FROM tbl_modules WHERE module_code=?),?,1,?)
-                """,(uid,module_code,sel_r,_ist().strftime("%Y-%m-%d %H:%M:%S")))
-                conn.commit(); st.session_state[f"_admin_msg_{mid}"] = ("s","Access granted successfully."); st.rerun()
-            except Exception as ex: st.error(str(ex))
-            finally: conn.close()
+                if eu["is_active"]:
+                    if dcol1.button("🚫 Deactivate User", key=f"{mid}_deact_user"):
+                        conn = get_conn()
+                        conn.execute("UPDATE tbl_users SET is_active=0 WHERE user_id=?",
+                                     (eu["user_id"],))
+                        conn.commit(); conn.close()
+                        st.success(f"User '{eu['username']}' deactivated.")
+                        st.rerun()
+                else:
+                    if dcol1.button("✅ Reactivate User", key=f"{mid}_react_user"):
+                        conn = get_conn()
+                        conn.execute("UPDATE tbl_users SET is_active=1 WHERE user_id=?",
+                                     (eu["user_id"],))
+                        conn.commit(); conn.close()
+                        st.success(f"User '{eu['username']}' reactivated.")
+                        st.rerun()
+
+                confirm_del = dcol2.checkbox(
+                    f"I confirm permanent deletion of '{eu['username']}'",
+                    key=f"{mid}_confirm_del_user"
+                )
+                if dcol2.button("🗑️ Delete Permanently", type="primary",
+                                key=f"{mid}_del_user", disabled=not confirm_del):
+                    conn = get_conn()
+                    try:
+                        conn.execute("DELETE FROM tbl_user_module_access WHERE user_id=?",
+                                     (eu["user_id"],))
+                        conn.execute("DELETE FROM tbl_users WHERE user_id=?",
+                                     (eu["user_id"],))
+                        conn.commit(); conn.close()
+                        st.success(f"User '{eu['username']}' permanently deleted.")
+                        del st.session_state[f"edit_uid_{mid}"]
+                        st.rerun()
+                    except Exception as ex:
+                        conn.close()
+                        st.error(
+                            f"Cannot delete: {ex}. This user likely has "
+                            "linked records (assets, audit logs, complaints). "
+                            "Use **Deactivate** instead."
+                        )
+
+    st.divider()
+    st.markdown("**Grant Module Access to Existing User**")
+    g1,g2,g3 = st.columns(3)
+    all_u = [dict(r) for r in _fa("SELECT user_id,full_name,username FROM tbl_users WHERE is_active=1 ORDER BY full_name")]
+    sel_u = g1.selectbox("User",[f"{u['full_name']} ({u['username']})" for u in all_u],key=f"{mid}_ga_user")
+    _ga_roles = [dict(r)["role_name"] for r in _fa("SELECT role_name FROM tbl_sims_roles WHERE role_name != 'SuperAdmin' ORDER BY is_system DESC, role_name")]
+    sel_r = g2.selectbox("Role", _ga_roles, key=f"{mid}_ga_role")
+    if g3.button("✅ Grant Access", key=f"{mid}_ga_save"):
+        idx = [f"{u['full_name']} ({u['username']})" for u in all_u].index(sel_u)
+        uid = all_u[idx]["user_id"]
+        conn = get_conn()
+        try:
+            conn.execute("""
+                INSERT OR REPLACE INTO tbl_user_module_access
+                    (user_id,module_id,role_name,is_active,granted_at)
+                VALUES (?,(SELECT module_id FROM tbl_modules WHERE module_code=?),?,1,?)
+            """,(uid,module_code,sel_r,_ist().strftime("%Y-%m-%d %H:%M:%S")))
+            conn.commit(); st.session_state[f"_admin_msg_{mid}"] = ("s","Access granted successfully."); st.rerun()
+        except Exception as ex: st.error(str(ex))
+        finally: conn.close()
 
 
 def show_depts(module_code):

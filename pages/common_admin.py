@@ -1,5 +1,5 @@
 """
-pages/common_admin.py — Administration panel matching IT-IIMS exactly.
+pages/common_admin.py ??? Administration panel matching IT-IIMS exactly.
 Sub-modules: User Management | Dept & Lab Setup | Suppliers | Role Matrix | Audit Log
 
 Usage:
@@ -18,33 +18,33 @@ from utils.helpers import export_df
 
 # Sub-modules for all SIMS modules
 SIMS_SUB_MODULES = [
-    "Inventory — Asset Search & Edit",
-    "Inventory — Case Sheets",
-    "Stock — Central Stock",
-    "Stock — Department Stock",
-    "Procurement — Forward",
-    "Procurement — Pending Approvals",
-    "Procurement — Joint Data Entry",
-    "Procurement — Log",
-    "Procurement — Bulk Upload",
-    "Complaints — Raise Complaint",
-    "Complaints — My Inbox",
-    "Complaints — Complaint Register",
-    "Complaints — Spare Parts Indent",
-    "Complaints — Closure Report",
-    "Warranty — Alerts",
-    "Warranty — Expiring Soon",
-    "Maintenance — Sheet",
-    "Maintenance — Asset Movement",
-    "Maintenance — Lab Register",
+    "Inventory ??? Asset Search & Edit",
+    "Inventory ??? Case Sheets",
+    "Stock ??? Central Stock",
+    "Stock ??? Department Stock",
+    "Procurement ??? Forward",
+    "Procurement ??? Pending Approvals",
+    "Procurement ??? Joint Data Entry",
+    "Procurement ??? Log",
+    "Procurement ??? Bulk Upload",
+    "Complaints ??? Raise Complaint",
+    "Complaints ??? My Inbox",
+    "Complaints ??? Complaint Register",
+    "Complaints ??? Spare Parts Indent",
+    "Complaints ??? Closure Report",
+    "Warranty ??? Alerts",
+    "Warranty ??? Expiring Soon",
+    "Maintenance ??? Sheet",
+    "Maintenance ??? Asset Movement",
+    "Maintenance ??? Lab Register",
     "Reports",
-    "Administration — User Management",
-    "Administration — Dept & Lab Setup",
-    "Administration — Suppliers",
-    "Administration — Role & Privileges",
-    "Administration — Audit Log",
-    "Account — Notifications",
-    "Account — Change Password",
+    "Administration ??? User Management",
+    "Administration ??? Dept & Lab Setup",
+    "Administration ??? Suppliers",
+    "Administration ??? Role & Privileges",
+    "Administration ??? Audit Log",
+    "Account ??? Notifications",
+    "Account ??? Change Password",
 ]
 
 ROLE_DEFAULTS = {
@@ -59,39 +59,39 @@ ROLE_DEFAULTS = {
 
 ROLE_VISIBLE = {
     "SysAdmin":   SIMS_SUB_MODULES,
-    "HoD":        ["Inventory — Asset Search & Edit","Stock — Central Stock",
-                   "Stock — Department Stock","Procurement — Pending Approvals",
-                   "Procurement — Log","Complaints — My Inbox",
-                   "Complaints — Complaint Register","Complaints — Spare Parts Indent",
-                   "Warranty — Alerts","Warranty — Expiring Soon","Reports",
-                   "Account — Notifications","Account — Change Password"],
-    "Coordinator":["Inventory — Asset Search & Edit","Stock — Central Stock",
-                   "Stock — Department Stock","Procurement — Forward",
-                   "Procurement — Pending Approvals","Procurement — Joint Data Entry",
-                   "Procurement — Log","Procurement — Bulk Upload",
-                   "Complaints — My Inbox","Complaints — Complaint Register",
-                   "Complaints — Spare Parts Indent","Maintenance — Sheet",
-                   "Maintenance — Asset Movement","Warranty — Alerts","Reports",
-                   "Account — Notifications","Account — Change Password"],
-    "Technician": ["Inventory — Asset Search & Edit","Stock — Department Stock",
-                   "Complaints — My Inbox","Complaints — Complaint Register",
-                   "Complaints — Spare Parts Indent","Maintenance — Sheet",
-                   "Maintenance — Asset Movement","Account — Notifications",
-                   "Account — Change Password"],
-    "Lab-IC":     ["Inventory — Asset Search & Edit","Stock — Department Stock",
-                   "Complaints — Raise Complaint","Complaints — My Inbox",
-                   "Complaints — Complaint Register","Warranty — Alerts",
-                   "Account — Notifications","Account — Change Password"],
-    "User":       ["Inventory — Asset Search & Edit","Stock — Department Stock",
-                   "Complaints — Raise Complaint","Complaints — My Inbox",
-                   "Account — Notifications","Account — Change Password"],
+    "HoD":        ["Inventory ??? Asset Search & Edit","Stock ??? Central Stock",
+                   "Stock ??? Department Stock","Procurement ??? Pending Approvals",
+                   "Procurement ??? Log","Complaints ??? My Inbox",
+                   "Complaints ??? Complaint Register","Complaints ??? Spare Parts Indent",
+                   "Warranty ??? Alerts","Warranty ??? Expiring Soon","Reports",
+                   "Account ??? Notifications","Account ??? Change Password"],
+    "Coordinator":["Inventory ??? Asset Search & Edit","Stock ??? Central Stock",
+                   "Stock ??? Department Stock","Procurement ??? Forward",
+                   "Procurement ??? Pending Approvals","Procurement ??? Joint Data Entry",
+                   "Procurement ??? Log","Procurement ??? Bulk Upload",
+                   "Complaints ??? My Inbox","Complaints ??? Complaint Register",
+                   "Complaints ??? Spare Parts Indent","Maintenance ??? Sheet",
+                   "Maintenance ??? Asset Movement","Warranty ??? Alerts","Reports",
+                   "Account ??? Notifications","Account ??? Change Password"],
+    "Technician": ["Inventory ??? Asset Search & Edit","Stock ??? Department Stock",
+                   "Complaints ??? My Inbox","Complaints ??? Complaint Register",
+                   "Complaints ??? Spare Parts Indent","Maintenance ??? Sheet",
+                   "Maintenance ??? Asset Movement","Account ??? Notifications",
+                   "Account ??? Change Password"],
+    "Lab-IC":     ["Inventory ??? Asset Search & Edit","Stock ??? Department Stock",
+                   "Complaints ??? Raise Complaint","Complaints ??? My Inbox",
+                   "Complaints ??? Complaint Register","Warranty ??? Alerts",
+                   "Account ??? Notifications","Account ??? Change Password"],
+    "User":       ["Inventory ??? Asset Search & Edit","Stock ??? Department Stock",
+                   "Complaints ??? Raise Complaint","Complaints ??? My Inbox",
+                   "Account ??? Notifications","Account ??? Change Password"],
 }
 
 
 def show(module_code):
     role = require_module_access(module_code)
     if role not in ("SuperAdmin","SysAdmin","Coordinator"):
-        st.error("Administration — SysAdmin / Coordinator only."); return
+        st.error("Administration ??? SysAdmin / Coordinator only."); return
 
     user = current_user()
     mod  = _fo("SELECT * FROM tbl_modules WHERE module_code=?", (module_code,))
@@ -104,7 +104,7 @@ def show(module_code):
 
 
 def show_users(module_code):
-    """👥 User Management — matches IT-IIMS users.py"""
+    """???? User Management ??? matches IT-IIMS users.py"""
     role = require_module_access(module_code)
     user = current_user()
     mod  = _fo("SELECT * FROM tbl_modules WHERE module_code=?", (module_code,))
@@ -117,21 +117,21 @@ def show_users(module_code):
 
     # DB Backup at top (SysAdmin only)
     if role in ("SuperAdmin","SysAdmin"):
-        with st.expander("🗄️ Database Backup & Statistics"):
+        with st.expander("??????? Database Backup & Statistics"):
             from config import DB_PATH
             from pathlib import Path
             c1,c2 = st.columns(2)
-            if c1.button("📥 Download DB Backup", type="primary", key=f"{mid}_db_backup"):
+            if c1.button("???? Download DB Backup", type="primary", key=f"{mid}_db_backup"):
                 p = Path(DB_PATH)
                 if p.exists():
                     ts = _ist().strftime("%Y%m%d_%H%M%S")
                     st.download_button(
-                        f"💾 Save sims_backup_{ts}.db", p.read_bytes(),
+                        f"???? Save sims_backup_{ts}.db", p.read_bytes(),
                         file_name=f"sims_backup_{ts}.db",
                         mime="application/octet-stream",
                         key=f"{mid}_db_dl")
                 else: st.error("DB file not found.")
-            if c2.button("📊 DB Statistics", key=f"{mid}_db_stats"):
+            if c2.button("???? DB Statistics", key=f"{mid}_db_stats"):
                 tables = [("tbl_items","Assets"),("tbl_invoices","Invoices"),
                           ("tbl_calls","Complaints"),("tbl_maintenance","Maintenance"),
                           ("tbl_users","Users"),("tbl_departments","Departments"),
@@ -145,166 +145,220 @@ def show_users(module_code):
                 if stats:
                     st.dataframe(pd.DataFrame(stats),use_container_width=True,hide_index=True)
 
-with tab1:
-    # Show users with module access
-    users = [dict(r) for r in _fa("""
-        SELECT u.user_id, u.full_name, u.username, u.employee_id,
-               a.role_name, d.dept_name, u.email, u.phone,
-               u.is_active, u.last_login
-        FROM tbl_user_module_access a
-        JOIN tbl_users u ON u.user_id=a.user_id
-        JOIN tbl_modules m ON m.module_id=a.module_id
-        LEFT JOIN tbl_departments d ON d.dept_id=u.dept_id
-        WHERE m.module_code=? AND a.is_active=1
-        ORDER BY u.full_name
-    """,(module_code,))]
+    tab1, tab2 = st.tabs(["???? All Users", "??? Create User"])
 
-    if users:
-        df = pd.DataFrame([{
-            "ID":u["user_id"],"Full Name":u["full_name"],"Username":u["username"],
-            "Emp ID":u["employee_id"],"Role":u["role_name"],
-            "Department":u.get("dept_name","—"),"Email":u.get("email","—"),
-            "Phone":u.get("phone","—"),
-            "Active":"Yes" if u["is_active"] else "No",
-            "Last Login":str(u.get("last_login",""))[:16],
-        } for u in users])
-        st.dataframe(df, use_container_width=True, hide_index=True)
-    else:
-        st.info("No users assigned to this module yet.")
+    with tab1:
+        # Show users with module access
+        users = [dict(r) for r in _fa("""
+            SELECT u.user_id, u.full_name, u.username, u.employee_id,
+                   a.role_name, d.dept_name, u.email, u.phone,
+                   u.is_active, u.last_login
+            FROM tbl_user_module_access a
+            JOIN tbl_users u ON u.user_id=a.user_id
+            JOIN tbl_modules m ON m.module_id=a.module_id
+            LEFT JOIN tbl_departments d ON d.dept_id=u.dept_id
+            WHERE m.module_code=? AND a.is_active=1
+            ORDER BY u.full_name
+        """,(module_code,))]
 
-    st.divider()
-    st.subheader("✏️ Edit User")
-    all_users = [dict(r) for r in _fa("SELECT user_id,full_name,username FROM tbl_users WHERE is_active=1 ORDER BY full_name")]
-    uid_opts  = {f"{u['full_name']} ({u['username']})": u["user_id"] for u in all_users}
-    sel_edit  = st.selectbox("Select User to Edit", list(uid_opts.keys()), key=f"{mid}_eu_sel")
-    if st.button("Load User", key=f"{mid}_eu_load"):
-        st.session_state[f"edit_uid_{mid}"] = uid_opts[sel_edit]
+        if users:
+            df = pd.DataFrame([{
+                "ID":u["user_id"],"Full Name":u["full_name"],"Username":u["username"],
+                "Emp ID":u["employee_id"],"Role":u["role_name"],
+                "Department":u.get("dept_name","???"),"Email":u.get("email","???"),
+                "Phone":u.get("phone","???"),
+                "Active":"Yes" if u["is_active"] else "No",
+                "Last Login":str(u.get("last_login",""))[:16],
+            } for u in users])
+            st.dataframe(df, use_container_width=True, hide_index=True)
+        else:
+            st.info("No users assigned to this module yet.")
 
-    if f"edit_uid_{mid}" in st.session_state:
-        eu = _fo("SELECT u.*, d.dept_name FROM tbl_users u LEFT JOIN tbl_departments d ON d.dept_id=u.dept_id WHERE u.user_id=?",
-                 (st.session_state[f"edit_uid_{mid}"],))
-        if eu:
-            eu = dict(eu)
-            depts = [dict(r) for r in _fa("SELECT * FROM tbl_departments WHERE is_active=1 ORDER BY dept_name")]
-            dm    = {"(None)": None}; dm.update({d["dept_name"]: d["dept_id"] for d in depts})
+        st.divider()
+        st.subheader("?????? Edit User")
+        all_users = [dict(r) for r in _fa("SELECT user_id,full_name,username FROM tbl_users WHERE is_active=1 ORDER BY full_name")]
+        uid_opts  = {f"{u['full_name']} ({u['username']})": u["user_id"] for u in all_users}
+        sel_edit  = st.selectbox("Select User to Edit", list(uid_opts.keys()), key=f"{mid}_eu_sel")
+        if st.button("Load User", key=f"{mid}_eu_load"):
+            st.session_state[f"edit_uid_{mid}"] = uid_opts[sel_edit]
 
-            # Get current module role for this user
-            cur_role = _fo("""
-                SELECT role_name FROM tbl_user_module_access a
-                JOIN tbl_modules m ON m.module_id=a.module_id
-                WHERE a.user_id=? AND m.module_code=?
-            """,(eu["user_id"], module_code))
-            cur_role_name = dict(cur_role)["role_name"] if cur_role else "User"
-            role_options = [dict(r)["role_name"] for r in _fa("SELECT role_name FROM tbl_sims_roles ORDER BY is_system DESC, role_name")]
+        if f"edit_uid_{mid}" in st.session_state:
+            eu = _fo("SELECT u.*, d.dept_name FROM tbl_users u LEFT JOIN tbl_departments d ON d.dept_id=u.dept_id WHERE u.user_id=?",
+                     (st.session_state[f"edit_uid_{mid}"],))
+            if eu:
+                eu = dict(eu)
+                depts = [dict(r) for r in _fa("SELECT * FROM tbl_departments WHERE is_active=1 ORDER BY dept_name")]
+                dm    = {"(None)": None}; dm.update({d["dept_name"]: d["dept_id"] for d in depts})
 
-            with st.form(f"edit_user_form_{mid}"):
-                fn   = st.text_input("Full Name",  eu["full_name"])
-                r_sel= st.selectbox("Module Role", role_options,
-                                    index=role_options.index(cur_role_name) if cur_role_name in role_options else 6)
-                d_sel= st.selectbox("Department", list(dm.keys()),
-                                    index=list(dm.values()).index(eu.get("dept_id")) if eu.get("dept_id") in dm.values() else 0)
-                email= st.text_input("Email",  eu.get("email","") or "")
-                phone= st.text_input("Phone",  eu.get("phone","") or "")
-                act  = st.checkbox("Active", value=bool(eu["is_active"]))
-                npw  = st.text_input("New Password (leave blank to keep)", type="password")
-                if st.form_submit_button("💾 Save", type="primary"):
-                    conn = get_conn()
-                    try:
-                        conn.execute("""
-                            UPDATE tbl_users SET full_name=?,dept_id=?,email=?,phone=?,is_active=?
-                            WHERE user_id=?
-                        """,(fn, dm[d_sel], email, phone, 1 if act else 0, eu["user_id"]))
-                        conn.execute("""
-                            UPDATE tbl_user_module_access SET role_name=?
-                            WHERE user_id=? AND module_id=(SELECT module_id FROM tbl_modules WHERE module_code=?)
-                        """,(r_sel, eu["user_id"], module_code))
-                        if npw.strip():
-                            conn.execute("UPDATE tbl_users SET password_hash=? WHERE user_id=?",
-                                         (hashlib.sha256(npw.encode()).hexdigest(), eu["user_id"]))
-                        conn.commit(); conn.close()
-                        st.success("User updated.")
-                        del st.session_state[f"edit_uid_{mid}"]
-                        st.rerun()
-                    except Exception as ex: st.error(str(ex)); conn.close()
+                # Get current module role for this user
+                cur_role = _fo("""
+                    SELECT role_name FROM tbl_user_module_access a
+                    JOIN tbl_modules m ON m.module_id=a.module_id
+                    WHERE a.user_id=? AND m.module_code=?
+                """,(eu["user_id"], module_code))
+                cur_role_name = dict(cur_role)["role_name"] if cur_role else "User"
+                role_options = [dict(r)["role_name"] for r in _fa("SELECT role_name FROM tbl_sims_roles ORDER BY is_system DESC, role_name")]
 
-            st.markdown("---")
-            st.markdown("#### 🗑 Delete / Deactivate User")
-            if eu["user_id"] == user.get("user_id"):
-                st.warning("You cannot delete or deactivate your own account.")
-            else:
-                st.caption(
-                    "**Deactivate** disables login but keeps history (recommended). "
-                    "**Delete** permanently removes the user record and ALL their "
-                    "module access — only possible if no audit/asset records "
-                    "reference this user."
-                )
-                dcol1, dcol2 = st.columns(2)
-
-                if eu["is_active"]:
-                    if dcol1.button("🚫 Deactivate User", key=f"{mid}_deact_user"):
+                with st.form(f"edit_user_form_{mid}"):
+                    fn   = st.text_input("Full Name",  eu["full_name"])
+                    r_sel= st.selectbox("Module Role", role_options,
+                                        index=role_options.index(cur_role_name) if cur_role_name in role_options else 6)
+                    d_sel= st.selectbox("Department", list(dm.keys()),
+                                        index=list(dm.values()).index(eu.get("dept_id")) if eu.get("dept_id") in dm.values() else 0)
+                    email= st.text_input("Email",  eu.get("email","") or "")
+                    phone= st.text_input("Phone",  eu.get("phone","") or "")
+                    act  = st.checkbox("Active", value=bool(eu["is_active"]))
+                    npw  = st.text_input("New Password (leave blank to keep)", type="password")
+                    if st.form_submit_button("???? Save", type="primary"):
                         conn = get_conn()
-                        conn.execute("UPDATE tbl_users SET is_active=0 WHERE user_id=?",
-                                     (eu["user_id"],))
-                        conn.commit(); conn.close()
-                        st.success(f"User '{eu['username']}' deactivated.")
-                        st.rerun()
+                        try:
+                            conn.execute("""
+                                UPDATE tbl_users SET full_name=?,dept_id=?,email=?,phone=?,is_active=?
+                                WHERE user_id=?
+                            """,(fn, dm[d_sel], email, phone, 1 if act else 0, eu["user_id"]))
+                            conn.execute("""
+                                UPDATE tbl_user_module_access SET role_name=?
+                                WHERE user_id=? AND module_id=(SELECT module_id FROM tbl_modules WHERE module_code=?)
+                            """,(r_sel, eu["user_id"], module_code))
+                            if npw.strip():
+                                conn.execute("UPDATE tbl_users SET password_hash=? WHERE user_id=?",
+                                             (hashlib.sha256(npw.encode()).hexdigest(), eu["user_id"]))
+                            conn.commit(); conn.close()
+                            st.success("User updated.")
+                            del st.session_state[f"edit_uid_{mid}"]
+                            st.rerun()
+                        except Exception as ex: st.error(str(ex)); conn.close()
+
+                st.markdown("---")
+                st.markdown("#### ???? Delete / Deactivate User")
+                if eu["user_id"] == user.get("user_id"):
+                    st.warning("You cannot delete or deactivate your own account.")
                 else:
-                    if dcol1.button("✅ Reactivate User", key=f"{mid}_react_user"):
+                    st.caption(
+                        "**Deactivate** disables login but keeps history (recommended). "
+                        "**Delete** permanently removes the user record and ALL their "
+                        "module access ??? only possible if no audit/asset records "
+                        "reference this user."
+                    )
+                    dcol1, dcol2 = st.columns(2)
+
+                    if eu["is_active"]:
+                        if dcol1.button("???? Deactivate User", key=f"{mid}_deact_user"):
+                            conn = get_conn()
+                            conn.execute("UPDATE tbl_users SET is_active=0 WHERE user_id=?",
+                                         (eu["user_id"],))
+                            conn.commit(); conn.close()
+                            st.success(f"User '{eu['username']}' deactivated.")
+                            st.rerun()
+                    else:
+                        if dcol1.button("??? Reactivate User", key=f"{mid}_react_user"):
+                            conn = get_conn()
+                            conn.execute("UPDATE tbl_users SET is_active=1 WHERE user_id=?",
+                                         (eu["user_id"],))
+                            conn.commit(); conn.close()
+                            st.success(f"User '{eu['username']}' reactivated.")
+                            st.rerun()
+
+                    confirm_del = dcol2.checkbox(
+                        f"I confirm permanent deletion of '{eu['username']}'",
+                        key=f"{mid}_confirm_del_user"
+                    )
+                    if dcol2.button("??????? Delete Permanently", type="primary",
+                                    key=f"{mid}_del_user", disabled=not confirm_del):
                         conn = get_conn()
-                        conn.execute("UPDATE tbl_users SET is_active=1 WHERE user_id=?",
-                                     (eu["user_id"],))
-                        conn.commit(); conn.close()
-                        st.success(f"User '{eu['username']}' reactivated.")
-                        st.rerun()
+                        try:
+                            conn.execute("DELETE FROM tbl_user_module_access WHERE user_id=?",
+                                         (eu["user_id"],))
+                            conn.execute("DELETE FROM tbl_users WHERE user_id=?",
+                                         (eu["user_id"],))
+                            conn.commit(); conn.close()
+                            st.success(f"User '{eu['username']}' permanently deleted.")
+                            del st.session_state[f"edit_uid_{mid}"]
+                            st.rerun()
+                        except Exception as ex:
+                            conn.close()
+                            st.error(
+                                f"Cannot delete: {ex}. This user likely has "
+                                "linked records (assets, audit logs, complaints). "
+                                "Use **Deactivate** instead."
+                            )
 
-                confirm_del = dcol2.checkbox(
-                    f"I confirm permanent deletion of '{eu['username']}'",
-                    key=f"{mid}_confirm_del_user"
-                )
-                if dcol2.button("🗑️ Delete Permanently", type="primary",
-                                key=f"{mid}_del_user", disabled=not confirm_del):
-                    conn = get_conn()
-                    try:
-                        conn.execute("DELETE FROM tbl_user_module_access WHERE user_id=?",
-                                     (eu["user_id"],))
-                        conn.execute("DELETE FROM tbl_users WHERE user_id=?",
-                                     (eu["user_id"],))
-                        conn.commit(); conn.close()
-                        st.success(f"User '{eu['username']}' permanently deleted.")
-                        del st.session_state[f"edit_uid_{mid}"]
-                        st.rerun()
-                    except Exception as ex:
-                        conn.close()
-                        st.error(
-                            f"Cannot delete: {ex}. This user likely has "
-                            "linked records (assets, audit logs, complaints). "
-                            "Use **Deactivate** instead."
-                        )
+    with tab2:
+        st.warning(
+            "Creating users here also creates them system-wide. "
+            "It is recommended to create users in the **Super Admin Panel** "
+            "(accessible from the main dashboard) and then use **Grant Module Access** below "
+            "to assign them to this module. This avoids duplicate user errors."
+        )
+        st.divider()
+        depts = [dict(r) for r in _fa("SELECT * FROM tbl_departments WHERE is_active=1 ORDER BY dept_name")]
+        dm    = {"(None)": None}; dm.update({d["dept_name"]: d["dept_id"] for d in depts})
 
-    st.divider()
-    st.markdown("**Grant Module Access to Existing User**")
-    g1,g2,g3 = st.columns(3)
-    all_u = [dict(r) for r in _fa("SELECT user_id,full_name,username FROM tbl_users WHERE is_active=1 ORDER BY full_name")]
-    sel_u = g1.selectbox("User",[f"{u['full_name']} ({u['username']})" for u in all_u],key=f"{mid}_ga_user")
-    _ga_roles = [dict(r)["role_name"] for r in _fa("SELECT role_name FROM tbl_sims_roles WHERE role_name != 'SuperAdmin' ORDER BY is_system DESC, role_name")]
-    sel_r = g2.selectbox("Role", _ga_roles, key=f"{mid}_ga_role")
-    if g3.button("✅ Grant Access", key=f"{mid}_ga_save"):
-        idx = [f"{u['full_name']} ({u['username']})" for u in all_u].index(sel_u)
-        uid = all_u[idx]["user_id"]
-        conn = get_conn()
-        try:
-            conn.execute("""
-                INSERT OR REPLACE INTO tbl_user_module_access
-                    (user_id,module_id,role_name,is_active,granted_at)
-                VALUES (?,(SELECT module_id FROM tbl_modules WHERE module_code=?),?,1,?)
-            """,(uid,module_code,sel_r,_ist().strftime("%Y-%m-%d %H:%M:%S")))
-            conn.commit(); st.session_state[f"_admin_msg_{mid}"] = ("s","Access granted successfully."); st.rerun()
-        except Exception as ex: st.error(str(ex))
-        finally: conn.close()
+        with st.form(f"create_user_form_{mid}"):
+            st.markdown("**New User Details**")
+            u1,u2   = st.columns(2)
+            username= u1.text_input("Username *")
+            password= u2.text_input("Password *", type="password")
+            u3,u4   = st.columns(2)
+            full_name=u3.text_input("Full Name *")
+            emp_id  = u4.text_input("Employee ID *")
+            u5,u6   = st.columns(2)
+            role_sel= u5.selectbox("Module Role *",
+                                    [dict(r)["role_name"] for r in _fa("SELECT role_name FROM tbl_sims_roles WHERE role_name != 'SuperAdmin' ORDER BY is_system DESC, role_name")])
+            dept_sel= u6.selectbox("Department", list(dm.keys()))
+            u7,u8   = st.columns(2)
+            email   = u7.text_input("Email")
+            phone   = u8.text_input("Phone")
+            submitted = st.form_submit_button("??? Create User", type="primary",
+                                              use_container_width=True)
+
+        if submitted:
+            if not all([username.strip(),password.strip(),full_name.strip(),emp_id.strip()]):
+                st.error("Username, Password, Full Name and Employee ID are required.")
+            else:
+                conn = get_conn()
+                try:
+                    uid = conn.execute("""
+                        INSERT INTO tbl_users (username,password_hash,full_name,employee_id,
+                            dept_id,email,phone,is_active,created_at)
+                        VALUES (?,?,?,?,?,?,?,1,?)
+                    """,(username.strip(),hashlib.sha256(password.encode()).hexdigest(),
+                         full_name.strip(),emp_id.strip(),dm[dept_sel],email,phone,
+                         _ist().strftime("%Y-%m-%d %H:%M:%S"))).lastrowid
+                    conn.execute("""
+                        INSERT OR REPLACE INTO tbl_user_module_access
+                            (user_id,module_id,role_name,is_active,granted_at)
+                        VALUES (?,(SELECT module_id FROM tbl_modules WHERE module_code=?),?,1,?)
+                    """,(uid,module_code,role_sel,_ist().strftime("%Y-%m-%d %H:%M:%S")))
+                    conn.commit(); conn.close()
+                    st.success(f"User '{username}' created with role '{role_sel}'.")
+                    st.rerun()
+                except Exception as ex: st.error(str(ex)); conn.close()
+
+        st.divider()
+        st.markdown("**Grant Module Access to Existing User**")
+        g1,g2,g3 = st.columns(3)
+        all_u = [dict(r) for r in _fa("SELECT user_id,full_name,username FROM tbl_users WHERE is_active=1 ORDER BY full_name")]
+        sel_u = g1.selectbox("User",[f"{u['full_name']} ({u['username']})" for u in all_u],key=f"{mid}_ga_user")
+        _ga_roles = [dict(r)["role_name"] for r in _fa("SELECT role_name FROM tbl_sims_roles WHERE role_name != 'SuperAdmin' ORDER BY is_system DESC, role_name")]
+        sel_r = g2.selectbox("Role", _ga_roles, key=f"{mid}_ga_role")
+        if g3.button("??? Grant Access", key=f"{mid}_ga_save"):
+            idx = [f"{u['full_name']} ({u['username']})" for u in all_u].index(sel_u)
+            uid = all_u[idx]["user_id"]
+            conn = get_conn()
+            try:
+                conn.execute("""
+                    INSERT OR REPLACE INTO tbl_user_module_access
+                        (user_id,module_id,role_name,is_active,granted_at)
+                    VALUES (?,(SELECT module_id FROM tbl_modules WHERE module_code=?),?,1,?)
+                """,(uid,module_code,sel_r,_ist().strftime("%Y-%m-%d %H:%M:%S")))
+                conn.commit(); st.session_state[f"_admin_msg_{mid}"] = ("s","Access granted successfully."); st.rerun()
+            except Exception as ex: st.error(str(ex))
+            finally: conn.close()
 
 
 def show_depts(module_code):
-    """🏫 Dept & Lab Setup"""
+    """???? Dept & Lab Setup"""
     from utils.auth import current_user
     user = current_user()
     is_superadmin = bool(int(user.get("is_super_admin") or 0))
@@ -320,7 +374,7 @@ def show_depts(module_code):
         st.markdown("**Add Department**")
         d1,d2 = st.columns(2)
         dn=d1.text_input("Dept Name *",key="new_dept_n"); dc=d2.text_input("Dept Code *",key="new_dept_c")
-        if st.button("➕ Add Dept", key="new_dept_save"):
+        if st.button("??? Add Dept", key="new_dept_save"):
             if dn and dc:
                 conn=get_conn()
                 try:
@@ -330,7 +384,7 @@ def show_depts(module_code):
                 finally: conn.close()
     else:
         st.caption(
-            "ℹ️ Departments are managed centrally by SuperAdmin. "
+            "?????? Departments are managed centrally by SuperAdmin. "
             "Contact SuperAdmin to add or modify departments."
         )
     st.divider()
@@ -342,7 +396,7 @@ def show_depts(module_code):
         ln=l2.text_input("Location Name *",key="new_loc_n")
         lc=l3.text_input("Code *",key="new_loc_c")
         lt=l4.selectbox("Type",["LAB","ROOM","FLOOR","BLOCK"],key="new_loc_type")
-        if st.button("➕ Add Location", key="new_loc_save"):
+        if st.button("??? Add Location", key="new_loc_save"):
             if ln and lc:
                 conn=get_conn()
                 try:
@@ -368,16 +422,16 @@ def show_depts(module_code):
 
 
 def show_suppliers(module_code):
-    """🏭 Supplier Master — matches IT-IIMS suppliers.py"""
-    tab1, tab2 = st.tabs(["📋 All Suppliers", "➕ Add Supplier"])
+    """???? Supplier Master ??? matches IT-IIMS suppliers.py"""
+    tab1, tab2 = st.tabs(["???? All Suppliers", "??? Add Supplier"])
 
     with tab1:
         supps = [dict(r) for r in _fa("SELECT * FROM tbl_suppliers ORDER BY supplier_name")]
         if supps:
             df = pd.DataFrame([{
                 "ID":s["supplier_id"],"Name":s["supplier_name"],
-                "Contact":s.get("contact_person","—"),"Phone":s.get("phone","—"),
-                "Email":s.get("email","—"),"Address":s.get("address","—"),
+                "Contact":s.get("contact_person","???"),"Phone":s.get("phone","???"),
+                "Email":s.get("email","???"),"Address":s.get("address","???"),
                 "Active":"Yes" if s["is_active"] else "No"
             } for s in supps])
             st.dataframe(df, use_container_width=True, hide_index=True)
@@ -399,7 +453,7 @@ def show_suppliers(module_code):
                         ph   = st.text_input("Phone",   sr.get("phone","") or "")
                         em   = st.text_input("Email",   sr.get("email","") or "")
                         act  = st.checkbox("Active",    value=bool(sr.get("is_active",1)))
-                        if st.form_submit_button("💾 Save"):
+                        if st.form_submit_button("???? Save"):
                             conn=get_conn()
                             conn.execute("""
                                 UPDATE tbl_suppliers SET supplier_name=?,contact_person=?,
@@ -419,7 +473,7 @@ def show_suppliers(module_code):
             addr = st.text_area("Address")
             ph   = st.text_input("Phone")
             em   = st.text_input("Email")
-            if st.form_submit_button("➕ Add Supplier", type="primary"):
+            if st.form_submit_button("??? Add Supplier", type="primary"):
                 if name.strip():
                     conn=get_conn()
                     try:
@@ -432,7 +486,7 @@ def show_suppliers(module_code):
 
 
 def show_role_matrix(module_code):
-    """🔐 Role & Privileges Matrix — assign VIEW/EDIT/DELETE/APPROVE per role per sub-module"""
+    """???? Role & Privileges Matrix ??? assign VIEW/EDIT/DELETE/APPROVE per role per sub-module"""
     mod  = _fo("SELECT * FROM tbl_modules WHERE module_code=?", (module_code,))
     if not mod: return
     mod  = dict(mod); mid = mod["module_id"]
@@ -463,7 +517,7 @@ def show_role_matrix(module_code):
     for r in matrix_rows:
         matrix.setdefault(r["role_name"],{}).setdefault(r["sub_module"],{})[r["privilege"]] = bool(r["is_allowed"])
 
-    tab1, tab2 = st.tabs(["📋 View Matrix","✏️ Edit Privileges"])
+    tab1, tab2 = st.tabs(["???? View Matrix","?????? Edit Privileges"])
 
     with tab1:
         st.markdown("**Current Role Privileges Matrix**")
@@ -474,12 +528,12 @@ def show_role_matrix(module_code):
             for role in roles_list:
                 perms = matrix.get(role,{}).get(sub,{})
                 icons = ""
-                if perms.get("VIEW",True):    icons += "👁 "
-                if perms.get("ADD",False):    icons += "➕ "
-                if perms.get("EDIT",False):   icons += "✏️ "
-                if perms.get("DELETE",False): icons += "🗑 "
-                if perms.get("APPROVE",False):icons += "✅ "
-                row[role] = icons.strip() or "—"
+                if perms.get("VIEW",True):    icons += "???? "
+                if perms.get("ADD",False):    icons += "??? "
+                if perms.get("EDIT",False):   icons += "?????? "
+                if perms.get("DELETE",False): icons += "???? "
+                if perms.get("APPROVE",False):icons += "??? "
+                row[role] = icons.strip() or "???"
             rows.append(row)
         df = pd.DataFrame(rows)
         st.dataframe(df, use_container_width=True, hide_index=True)
@@ -501,7 +555,7 @@ def show_role_matrix(module_code):
         v_del    = p4.checkbox("DELETE", value=cur.get("DELETE", False), key=f"{mid}_rm_del")
         v_appr   = p5.checkbox("APPROVE",value=cur.get("APPROVE",False), key=f"{mid}_rm_appr")
 
-        if st.button("💾 Save Privileges", type="primary", key=f"{mid}_rm_save"):
+        if st.button("???? Save Privileges", type="primary", key=f"{mid}_rm_save"):
             try:
                 conn = get_conn()
                 # Ensure table exists
@@ -520,7 +574,7 @@ def show_role_matrix(module_code):
             except Exception as ex: st.error(f"Failed: {ex}")
 
         st.divider()
-        st.markdown("**Quick Setup — Apply Default Privileges for All Roles**")
+        st.markdown("**Quick Setup ??? Apply Default Privileges for All Roles**")
         st.caption("Sets sensible defaults based on role. You can customize above afterwards.")
 
         defaults = {
@@ -532,7 +586,7 @@ def show_role_matrix(module_code):
             "User":       {"VIEW":True,"ADD":False,"EDIT":False,"DELETE":False,"APPROVE":False},
         }
 
-        if st.button("⚡ Apply Default Matrix for All Roles & Sub-Modules",
+        if st.button("??? Apply Default Matrix for All Roles & Sub-Modules",
                      key=f"{mid}_rm_defaults"):
             try:
                 conn = get_conn()
@@ -549,13 +603,13 @@ def show_role_matrix(module_code):
                                  _ist().strftime("%Y-%m-%d %H:%M:%S")))
                             count += 1
                 conn.commit(); conn.close()
-                st.success(f"Default matrix applied — {count} privilege records saved.")
+                st.success(f"Default matrix applied ??? {count} privilege records saved.")
                 st.rerun()
             except Exception as ex: st.error(f"Failed: {ex}")
 
 
 def show_audit(module_code):
-    """📜 Audit Log"""
+    """???? Audit Log"""
     mod = _fo("SELECT module_id FROM tbl_modules WHERE module_code=?", (module_code,))
     if not mod: return
     mid = dict(mod)["module_id"]
@@ -568,8 +622,8 @@ def show_audit(module_code):
     """,(mid,))]
     if not rows: st.info("No audit records yet."); return
     df = pd.DataFrame([{
-        "Time":str(r.get("created_at",""))[:16],"User":r.get("user_name","—"),
-        "Action":r["action"],"Table":r.get("table_name","—"),
+        "Time":str(r.get("created_at",""))[:16],"User":r.get("user_name","???"),
+        "Action":r["action"],"Table":r.get("table_name","???"),
         "Details":(r.get("details","") or "")[:80],
     } for r in rows])
     st.dataframe(df, use_container_width=True, hide_index=True)
@@ -577,7 +631,7 @@ def show_audit(module_code):
 
 
 def show_role_matrix(module_code):
-    """🔐 Role & Privileges Matrix for SRGEC-SIMS module."""
+    """???? Role & Privileges Matrix for SRGEC-SIMS module."""
     from utils.auth import current_user
     user = current_user()
     is_superadmin = bool(int(user.get("is_super_admin") or 0))
@@ -593,7 +647,7 @@ def show_role_matrix(module_code):
  
     if not is_superadmin:
         st.warning(
-            "⛔ Role & Privileges are managed centrally by SuperAdmin. "
+            "??? Role & Privileges are managed centrally by SuperAdmin. "
             "You can view the current matrix below, but editing is restricted."
         )
         rows_db = [dict(r) for r in _fa(
@@ -609,20 +663,20 @@ def show_role_matrix(module_code):
             for role_n in roles_list:
                 r = lookup.get((role_n, sub), {})
                 if not r.get("is_visible", 1):
-                    row[role_n] = "🚫"
+                    row[role_n] = "????"
                 else:
                     icons = ""
-                    if r.get("can_view",1):    icons += "👁 "
-                    if r.get("can_add",0):     icons += "➕ "
-                    if r.get("can_edit",0):    icons += "✏️ "
-                    if r.get("can_delete",0):  icons += "🗑 "
-                    if r.get("can_approve",0): icons += "✅ "
-                    row[role_n] = icons.strip() or "👁"
+                    if r.get("can_view",1):    icons += "???? "
+                    if r.get("can_add",0):     icons += "??? "
+                    if r.get("can_edit",0):    icons += "?????? "
+                    if r.get("can_delete",0):  icons += "???? "
+                    if r.get("can_approve",0): icons += "??? "
+                    row[role_n] = icons.strip() or "????"
             rows.append(row)
         st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
         return
  
-    sub1, sub2 = st.tabs(["📋 View Matrix", "✏️ Edit Role Privileges"])
+    sub1, sub2 = st.tabs(["???? View Matrix", "?????? Edit Role Privileges"])
 
     with sub1:
         rows_db = [dict(r) for r in _fa(
@@ -630,7 +684,7 @@ def show_role_matrix(module_code):
             (module_code,))]
         if not rows_db:
             st.info("No role privileges defined yet.")
-            if st.button("⚡ Apply Default Role Privileges", type="primary",
+            if st.button("??? Apply Default Role Privileges", type="primary",
                          key=f"apply_def_{module_code}"):
                 _apply_role_defaults(module_code)
                 st.success("Default privileges applied."); st.rerun()
@@ -643,27 +697,27 @@ def show_role_matrix(module_code):
             for role_n in roles_list:
                 r = lookup.get((role_n, sub), {})
                 if not r.get("is_visible", 1):
-                    row[role_n] = "🚫"
+                    row[role_n] = "????"
                 else:
                     icons = ""
-                    if r.get("can_view",1):    icons += "👁 "
-                    if r.get("can_add",0):     icons += "➕ "
-                    if r.get("can_edit",0):    icons += "✏️ "
-                    if r.get("can_delete",0):  icons += "🗑 "
-                    if r.get("can_approve",0): icons += "✅ "
-                    row[role_n] = icons.strip() or "👁"
+                    if r.get("can_view",1):    icons += "???? "
+                    if r.get("can_add",0):     icons += "??? "
+                    if r.get("can_edit",0):    icons += "?????? "
+                    if r.get("can_delete",0):  icons += "???? "
+                    if r.get("can_approve",0): icons += "??? "
+                    row[role_n] = icons.strip() or "????"
             rows.append(row)
         df = pd.DataFrame(rows)
         st.dataframe(df, use_container_width=True, hide_index=True)
 
         c1,c2 = st.columns(2)
-        if c1.button("⚡ Re-apply Defaults", key=f"reapply_{module_code}"):
+        if c1.button("??? Re-apply Defaults", key=f"reapply_{module_code}"):
             _apply_role_defaults(module_code)
             st.success("Defaults re-applied."); st.rerun()
         import io
         buf = io.BytesIO()
         df.to_excel(buf, index=False, engine="openpyxl")
-        c2.download_button("📥 Export Matrix", buf.getvalue(),
+        c2.download_button("???? Export Matrix", buf.getvalue(),
                            f"{module_code}_Role_Matrix.xlsx",
                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
@@ -684,7 +738,7 @@ def show_role_matrix(module_code):
         v_del  = p5.checkbox("DELETE",  value=bool(cur.get("can_delete",0)),  key=f"rm_del_{module_code}")
         v_appr = p6.checkbox("APPROVE", value=bool(cur.get("can_approve",0)), key=f"rm_appr_{module_code}")
 
-        if st.button("💾 Save Role Privilege", type="primary", key=f"rm_save_{module_code}"):
+        if st.button("???? Save Role Privilege", type="primary", key=f"rm_save_{module_code}"):
             conn = get_conn()
             conn.execute("""
                 INSERT OR REPLACE INTO tbl_role_module_privileges
@@ -696,11 +750,11 @@ def show_role_matrix(module_code):
                  1 if v_del else 0, 1 if v_appr else 0, 1 if v_vis else 0,
                  _ist().strftime("%Y-%m-%d %H:%M:%S")))
             conn.commit(); conn.close()
-            st.success(f"Saved: {sel_role} → {sel_sub}"); st.rerun()
+            st.success(f"Saved: {sel_role} ??? {sel_sub}"); st.rerun()
 
 
 def show_user_privileges(module_code):
-    """👤 User-level privilege overrides."""
+    """???? User-level privilege overrides."""
     st.info(
         "Override privileges for a specific user. "
         "User overrides take priority over role defaults."
@@ -717,7 +771,7 @@ def show_user_privileges(module_code):
 
     u_opts = {f"{u['full_name']} ({u['username']} / {u['role_name']})": u for u in all_users}
 
-    tab1, tab2, tab3 = st.tabs(["👁 View Access","✏️ Edit Override","🔄 Copy Role Defaults"])
+    tab1, tab2, tab3 = st.tabs(["???? View Access","?????? Edit Override","???? Copy Role Defaults"])
 
     with tab1:
         sel_u = st.selectbox("Select User", list(u_opts.keys()), key=f"up_view1_{module_code}")
@@ -732,16 +786,16 @@ def show_user_privileges(module_code):
         rows = []
         for sub in SIMS_SUB_MODULES:
             p = user_privs.get(sub) or role_privs.get(sub) or {}
-            source = "👤 User Override" if sub in user_privs else "🔖 Role Default"
+            source = "???? User Override" if sub in user_privs else "???? Role Default"
             icons = ""
-            if p.get("can_view",1):    icons += "👁 "
-            if p.get("can_add",0):     icons += "➕ "
-            if p.get("can_edit",0):    icons += "✏️ "
-            if p.get("can_delete",0):  icons += "🗑 "
-            if p.get("can_approve",0): icons += "✅ "
+            if p.get("can_view",1):    icons += "???? "
+            if p.get("can_add",0):     icons += "??? "
+            if p.get("can_edit",0):    icons += "?????? "
+            if p.get("can_delete",0):  icons += "???? "
+            if p.get("can_approve",0): icons += "??? "
             rows.append({"Sub-Module":sub,
-                         "Visible":"✅" if p.get("is_visible",1) else "🚫",
-                         "Privileges":icons.strip() or "👁","Source":source})
+                         "Visible":"???" if p.get("is_visible",1) else "????",
+                         "Privileges":icons.strip() or "????","Source":source})
         st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
     with tab2:
@@ -766,7 +820,7 @@ def show_user_privileges(module_code):
         v_appr = p6.checkbox("APPROVE", value=bool(cur.get("can_approve",0)), key=f"up_appr2_{module_code}")
 
         c1,c2 = st.columns(2)
-        if c1.button("💾 Save Override", type="primary", key=f"up_save2_{module_code}"):
+        if c1.button("???? Save Override", type="primary", key=f"up_save2_{module_code}"):
             user_obj = current_user()
             conn = get_conn()
             conn.execute("""
@@ -779,8 +833,8 @@ def show_user_privileges(module_code):
                  1 if v_del else 0, 1 if v_appr else 0, 1 if v_vis else 0,
                  user_obj.get("user_id"),_ist().strftime("%Y-%m-%d %H:%M:%S")))
             conn.commit(); conn.close()
-            st.success(f"Override saved for {u_row2['full_name']} → {sel_sub}"); st.rerun()
-        if c2.button("🗑 Remove Override", key=f"up_rem2_{module_code}"):
+            st.success(f"Override saved for {u_row2['full_name']} ??? {sel_sub}"); st.rerun()
+        if c2.button("???? Remove Override", key=f"up_rem2_{module_code}"):
             conn = get_conn()
             conn.execute("DELETE FROM tbl_user_module_privileges WHERE user_id=? AND module_code=? AND sub_module=?",
                          (uid2, module_code, sel_sub))
@@ -790,7 +844,7 @@ def show_user_privileges(module_code):
     with tab3:
         sel_u3 = st.selectbox("Select User", list(u_opts.keys()), key=f"up_copy3_{module_code}")
         u_row3 = u_opts[sel_u3]
-        if st.button(f"🔄 Copy {u_row3['role_name']} defaults to {u_row3['full_name']}",
+        if st.button(f"???? Copy {u_row3['role_name']} defaults to {u_row3['full_name']}",
                      type="primary", key=f"up_copybtn_{module_code}"):
             role_privs3 = [dict(r) for r in _fa(
                 "SELECT * FROM tbl_role_module_privileges WHERE module_code=? AND role_name=?",

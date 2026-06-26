@@ -145,9 +145,6 @@ def show_users(module_code):
                 if stats:
                     st.dataframe(pd.DataFrame(stats),use_container_width=True,hide_index=True)
 
-    tab1, tab2 = st.tabs(["???? All Users", "??? Create User"])
-
-    with tab1:
         # Show users with module access
         users = [dict(r) for r in _fa("""
             SELECT u.user_id, u.full_name, u.username, u.employee_id,
@@ -283,78 +280,26 @@ def show_users(module_code):
                                 "Use **Deactivate** instead."
                             )
 
-    with tab2:
-        st.warning(
-            "Creating users here also creates them system-wide. "
-            "It is recommended to create users in the **Super Admin Panel** "
-            "(accessible from the main dashboard) and then use **Grant Module Access** below "
-            "to assign them to this module. This avoids duplicate user errors."
-        )
-        st.divider()
-        depts = [dict(r) for r in _fa("SELECT * FROM tbl_departments WHERE is_active=1 ORDER BY dept_name")]
-        dm    = {"(None)": None}; dm.update({d["dept_name"]: d["dept_id"] for d in depts})
-
-        with st.form(f"create_user_form_{mid}"):
-            st.markdown("**New User Details**")
-            u1,u2   = st.columns(2)
-            username= u1.text_input("Username *")
-            password= u2.text_input("Password *", type="password")
-            u3,u4   = st.columns(2)
-            full_name=u3.text_input("Full Name *")
-            emp_id  = u4.text_input("Employee ID *")
-            u5,u6   = st.columns(2)
-            role_sel= u5.selectbox("Module Role *",
-                                    [dict(r)["role_name"] for r in _fa("SELECT role_name FROM tbl_sims_roles WHERE role_name != 'SuperAdmin' ORDER BY is_system DESC, role_name")])
-            dept_sel= u6.selectbox("Department", list(dm.keys()))
-            u7,u8   = st.columns(2)
-            email   = u7.text_input("Email")
-            phone   = u8.text_input("Phone")
-            submitted = st.form_submit_button("??? Create User", type="primary",
-                                              use_container_width=True)
-
-        if submitted:
-            if not all([username.strip(),password.strip(),full_name.strip(),emp_id.strip()]):
-                st.error("Username, Password, Full Name and Employee ID are required.")
-            else:
-                conn = get_conn()
-                try:
-                    uid = conn.execute("""
-                        INSERT INTO tbl_users (username,password_hash,full_name,employee_id,
-                            dept_id,email,phone,is_active,created_at)
-                        VALUES (?,?,?,?,?,?,?,1,?)
-                    """,(username.strip(),hashlib.sha256(password.encode()).hexdigest(),
-                         full_name.strip(),emp_id.strip(),dm[dept_sel],email,phone,
-                         _ist().strftime("%Y-%m-%d %H:%M:%S"))).lastrowid
-                    conn.execute("""
-                        INSERT OR REPLACE INTO tbl_user_module_access
-                            (user_id,module_id,role_name,is_active,granted_at)
-                        VALUES (?,(SELECT module_id FROM tbl_modules WHERE module_code=?),?,1,?)
-                    """,(uid,module_code,role_sel,_ist().strftime("%Y-%m-%d %H:%M:%S")))
-                    conn.commit(); conn.close()
-                    st.success(f"User '{username}' created with role '{role_sel}'.")
-                    st.rerun()
-                except Exception as ex: st.error(str(ex)); conn.close()
-
-        st.divider()
-        st.markdown("**Grant Module Access to Existing User**")
-        g1,g2,g3 = st.columns(3)
-        all_u = [dict(r) for r in _fa("SELECT user_id,full_name,username FROM tbl_users WHERE is_active=1 ORDER BY full_name")]
-        sel_u = g1.selectbox("User",[f"{u['full_name']} ({u['username']})" for u in all_u],key=f"{mid}_ga_user")
-        _ga_roles = [dict(r)["role_name"] for r in _fa("SELECT role_name FROM tbl_sims_roles WHERE role_name != 'SuperAdmin' ORDER BY is_system DESC, role_name")]
-        sel_r = g2.selectbox("Role", _ga_roles, key=f"{mid}_ga_role")
-        if g3.button("??? Grant Access", key=f"{mid}_ga_save"):
-            idx = [f"{u['full_name']} ({u['username']})" for u in all_u].index(sel_u)
-            uid = all_u[idx]["user_id"]
-            conn = get_conn()
-            try:
-                conn.execute("""
-                    INSERT OR REPLACE INTO tbl_user_module_access
-                        (user_id,module_id,role_name,is_active,granted_at)
-                    VALUES (?,(SELECT module_id FROM tbl_modules WHERE module_code=?),?,1,?)
-                """,(uid,module_code,sel_r,_ist().strftime("%Y-%m-%d %H:%M:%S")))
-                conn.commit(); st.session_state[f"_admin_msg_{mid}"] = ("s","Access granted successfully."); st.rerun()
-            except Exception as ex: st.error(str(ex))
-            finally: conn.close()
+    st.divider()
+    st.markdown("**Grant Module Access to Existing User**")
+    g1,g2,g3 = st.columns(3)
+    all_u = [dict(r) for r in _fa("SELECT user_id,full_name,username FROM tbl_users WHERE is_active=1 ORDER BY full_name")]
+    sel_u = g1.selectbox("User",[f"{u['full_name']} ({u['username']})" for u in all_u],key=f"{mid}_ga_user")
+    _ga_roles = [dict(r)["role_name"] for r in _fa("SELECT role_name FROM tbl_sims_roles WHERE role_name != 'SuperAdmin' ORDER BY is_system DESC, role_name")]
+    sel_r = g2.selectbox("Role", _ga_roles, key=f"{mid}_ga_role")
+    if g3.button("??? Grant Access", key=f"{mid}_ga_save"):
+        idx = [f"{u['full_name']} ({u['username']})" for u in all_u].index(sel_u)
+        uid = all_u[idx]["user_id"]
+        conn = get_conn()
+        try:
+            conn.execute("""
+                INSERT OR REPLACE INTO tbl_user_module_access
+                    (user_id,module_id,role_name,is_active,granted_at)
+                VALUES (?,(SELECT module_id FROM tbl_modules WHERE module_code=?),?,1,?)
+            """,(uid,module_code,sel_r,_ist().strftime("%Y-%m-%d %H:%M:%S")))
+            conn.commit(); st.session_state[f"_admin_msg_{mid}"] = ("s","Access granted successfully."); st.rerun()
+        except Exception as ex: st.error(str(ex))
+        finally: conn.close()
 
 
 def show_depts(module_code):

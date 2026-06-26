@@ -1,0 +1,24 @@
+﻿# Node modules
+node_modules/
+package-lock.json
+
+# Python utility/fix scripts (keep in local only)
+fix_*.py
+wire_*.py
+add_*.py
+rename_*.py
+dedupe_*.py
+replace_*.py
+check_*.py
+
+# Temporary files
+*.tmp
+pages/module_home_temp.py
+pages/module_home_orig.py
+sims_report_data.json
+generate_report_run.js
+generate_report_test.js
+
+# Generated reports
+complaint_report.docx
+sims_complaint_report.docx

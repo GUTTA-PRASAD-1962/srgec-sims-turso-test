@@ -104,6 +104,7 @@ def _render_module_sidebar(module_code, mod, role):
         pnav("🆕  Raise Complaint",       "raise_complaint","Complaints — Raise Complaint")
         pnav("📥  My Inbox",              "my_inbox",      "Complaints — My Inbox")
         pnav("📂  Complaint Register",    "complaint_register","Complaints — Complaint Register")
+        pnav("❌  Cancel / Manage Calls", "cancel_calls", "Complaints — Cancel / Manage")
         pnav("🔩  Spare Parts Indent",    "spare_indent",  "Complaints — Spare Parts Indent")
         pnav("📄  Closure Report",        "closure_report","Complaints — Closure Report")
 
@@ -241,6 +242,10 @@ def _route(subpage, module_code, mod, role, user):
         ])
         with itab1: _tab_pending(user, role, mod, mid)
         with itab2: _tab_register(user, role, mod, mid)
+    elif subpage == "cancel_calls":
+        from pages.cancel_calls import show as cc_show
+        st.title("❌ Cancel / Manage Calls")
+        cc_show(module_code)
 
     elif subpage == "raise_complaint":
         st.title("🆕 Raise Complaint Call")

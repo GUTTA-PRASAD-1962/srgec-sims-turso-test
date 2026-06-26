@@ -15,14 +15,15 @@ def show():
     st.title("Super Admin Configuration Panel")
     st.info("Configure all 8 modules — item types, fields, workflow rules, users, and departments.")
 
-    tab1,tab2,tab3,tab4,tab5 = st.tabs([
-        "Modules","Users & Access","Item Types & Fields","Workflow Rules","Departments"
+    tab1,tab2,tab3,tab4,tab5,tab6 = st.tabs([
+        "Modules","Users & Access","Item Types & Fields","Workflow Rules","Departments","Role Management"
     ])
     with tab1: _modules()
     with tab2: _users()
     with tab3: _fields()
     with tab4: _workflow()
     with tab5: _depts()
+    with tab6: _role_mgmt()
 
 def _modules():
     mods = [dict(r) for r in _fa("SELECT * FROM tbl_modules ORDER BY sort_order")]
@@ -273,3 +274,75 @@ def _depts():
                 conn.commit(); st.success("Added."); st.rerun()
             except Exception as e: st.error(str(e))
             finally: conn.close()
+
+
+def _role_mgmt():
+    """System-wide role name management — SuperAdmin only."""
+    st.subheader("System-wide Role Management")
+    st.info(
+        "Rename a role across ALL tables and ALL modules simultaneously: "
+        "user access records, workflow rules, and privilege settings."
+    )
+    # Get all current role names in use
+    roles_access = sorted(set(dict(r)["role_name"] for r in _fa(
+        "SELECT DISTINCT role_name FROM tbl_user_module_access ORDER BY role_name")))
+    roles_rules = set()
+    for r in _fa("SELECT DISTINCT allowed_roles FROM tbl_workflow_rules"):
+        for role in dict(r)["allowed_roles"].split(","):
+            roles_rules.add(role.strip())
+    roles_privs = sorted(set(dict(r)["role_name"] for r in _fa(
+        "SELECT DISTINCT role_name FROM tbl_role_module_privileges ORDER BY role_name")))
+
+    all_roles = sorted(set(roles_access) | roles_rules | set(roles_privs))
+
+    if not all_roles:
+        st.info("No roles found in the system."); return
+
+    import pandas as pd
+    c1, c2, c3 = st.columns(3)
+    c1.markdown("**In User Access**\n" + "\n".join(f"- {r}" for r in roles_access))
+    c2.markdown("**In Workflow Rules**\n" + "\n".join(f"- {r}" for r in sorted(roles_rules)))
+    c3.markdown("**In Privileges**\n" + "\n".join(f"- {r}" for r in roles_privs))
+
+    st.divider()
+    st.markdown("#### Rename a Role")
+    old_role = st.selectbox("Select role to rename", all_roles, key="sa_rr_old")
+    new_role = st.text_input("New role name *", key="sa_rr_new",
+                             placeholder="e.g. UPS Technician")
+    if not new_role.strip() or new_role.strip() == old_role:
+        return
+
+    affected_users = [dict(r) for r in _fa("""
+        SELECT u.full_name, u.username, m.module_name
+        FROM tbl_user_module_access a
+        JOIN tbl_users u ON u.user_id=a.user_id
+        JOIN tbl_modules m ON m.module_id=a.module_id
+        WHERE a.role_name=?
+    """, (old_role,))]
+    affected_rules = [dict(r) for r in _fa(
+        "SELECT rule_id, allowed_roles FROM tbl_workflow_rules "
+        "WHERE (',' || allowed_roles || ',') LIKE ?",
+        (f"%,{old_role},%",))]
+    priv_count = dict(_fo("SELECT COUNT(*) c FROM tbl_role_module_privileges WHERE role_name=?",
+                          (old_role,)) or {"c":0})["c"]
+
+    st.markdown(f"**Impact:** {len(affected_users)} user(s), {len(affected_rules)} rule(s), {priv_count} privilege(s)")
+    if affected_users:
+        st.dataframe(pd.DataFrame([{"User":u["full_name"],"Module":u["module_name"]} for u in affected_users]),
+                     use_container_width=True, hide_index=True)
+
+    confirm = st.checkbox(f"Confirm rename '{old_role}' to '{new_role.strip()}'", key="sa_rr_confirm")
+    if st.button("Rename Role System-wide", type="primary", key="sa_rr_submit", disabled=not confirm):
+        try:
+            conn = get_conn()
+            new = new_role.strip()
+            conn.execute("UPDATE tbl_user_module_access SET role_name=? WHERE role_name=?", (new, old_role))
+            for rule in affected_rules:
+                updated = ",".join(new if r.strip()==old_role else r.strip() for r in rule["allowed_roles"].split(","))
+                conn.execute("UPDATE tbl_workflow_rules SET allowed_roles=? WHERE rule_id=?", (updated, rule["rule_id"]))
+            conn.execute("UPDATE tbl_role_module_privileges SET role_name=? WHERE role_name=?", (new, old_role))
+            conn.commit(); conn.close()
+            st.success(f"Role renamed from '{old_role}' to '{new}' successfully.")
+            st.rerun()
+        except Exception as ex:
+            st.error(f"Failed: {ex}")

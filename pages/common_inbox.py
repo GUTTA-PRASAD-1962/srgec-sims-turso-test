@@ -31,6 +31,37 @@ def show(module_code):
     if st.session_state.get(f"_inbox_msg_{mid}"):
         t, m = st.session_state.pop(f"_inbox_msg_{mid}")
         (st.success if t=="s" else st.error)(m)
+    if st.session_state.get(f"_report_ready_{mid}"):
+        closed_call_id = st.session_state[f"_report_ready_{mid}"]
+        st.info("Complaint closed successfully! Generate the closure report now:")
+        if st.button("Generate & Download Closure Report", key=f"inline_report_{mid}"):
+            from pages.call_report import _build_report_data, _generate_docx
+            from db.connection import fetchone as _fo2
+            closed_call = dict(_fo2("""
+                SELECT c.*, i.unique_item_id, i.description AS item_desc,
+                       i.item_status AS final_item_status,
+                       u.full_name AS raised_by_name, u.dept_id,
+                       d.dept_name, au.full_name AS assignee_name
+                FROM tbl_calls c
+                LEFT JOIN tbl_items i ON i.item_id = c.item_id
+                LEFT JOIN tbl_users u ON u.user_id = c.raised_by
+                LEFT JOIN tbl_departments d ON d.dept_id = u.dept_id
+                LEFT JOIN tbl_users au ON au.user_id = c.current_assignee
+                WHERE c.call_id=?
+            """, (closed_call_id,)) or {})
+            mod2 = dict(_fo2("SELECT * FROM tbl_modules WHERE module_id=?", (mid,)) or {})
+            if closed_call and mod2:
+                data = _build_report_data(closed_call, mod2)
+                result = _generate_docx(data)
+                if result:
+                    fname = f"Closure_Report_{closed_call.get('call_number','').replace('/','_')}.docx"
+                    st.download_button(
+                        f"Download {fname}", result,
+                        file_name=fname,
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        key=f"inline_dl_{mid}"
+                    )
+                    st.session_state.pop(f"_report_ready_{mid}")
     tab1,tab2,tab3,tab4 = st.tabs([
         "Pending My Action",
         "Raise Complaint",
@@ -447,6 +478,7 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
             if new_status == "FILE CLOSED":
                 conn.execute("UPDATE tbl_items SET item_status='WORKING' WHERE item_id=?",
                              (call.get("item_id"),))
+                st.session_state[f"_report_ready_{mid}"] = call["call_id"]
             conn.commit(); conn.close()
             st.session_state[f"_inbox_msg_{mid}"] = ("s",
                 f"{sel_action} - Status: **{new_status}**")

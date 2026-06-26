@@ -13,9 +13,9 @@ from utils.auth import current_user, require_module_access
 from utils.helpers import format_date, save_scan
 
 STATUS_ICON = {
-    "OPEN":"🟡","UNDER REVIEW":"🔵","FORWARDED":"🔵","ASSIGNED":"🟠",
-    "UNDER REPAIR":"🔧","PARTS NEEDED":"🟣","PARTS ORDERED":"🟤",
-    "REPAIRED":"🟢","VERIFIED":"🟢","CLOSED":"✅","FILE CLOSED":"✅","REJECTED":"❌"
+    "OPEN":"Ã°Å¸Å¸Â¡","UNDER REVIEW":"Ã°Å¸â€Âµ","FORWARDED":"Ã°Å¸â€Âµ","ASSIGNED":"Ã°Å¸Å¸Â ",
+    "UNDER REPAIR":"Ã°Å¸â€Â§","PARTS NEEDED":"Ã°Å¸Å¸Â£","PARTS ORDERED":"Ã°Å¸Å¸Â¤",
+    "REPAIRED":"Ã°Å¸Å¸Â¢","VERIFIED":"Ã°Å¸Å¸Â¢","CLOSED":"Ã¢Å“â€¦","FILE CLOSED":"Ã¢Å“â€¦","REJECTED":"Ã¢ÂÅ’"
 }
 
 def _ist():
@@ -416,8 +416,7 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
         if la.get("action_comment") and la["action_comment"] != call.get("complaint_text",""):
             st.markdown(
                 f"**Last Action:** `{la['action_type']}` by **{la.get('actor','-')}** "
-                f"on {str(la.get('action_at',''))[:16]}  
-"
+                f"on {str(la.get('action_at',''))[:16]}  \n"
                 f"> {la['action_comment']}"
             )
 
@@ -500,11 +499,77 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
                              (call.get("item_id"),))
                 st.session_state[f"_report_ready_{mid}"] = call["call_id"]
             conn.commit(); conn.close()
+            # Send notification to next actor
+            _notify_next(call["call_id"], call.get("call_number",""), new_status, mid,
+                        user.get("full_name",""), comment.strip())
             st.session_state[f"_inbox_msg_{mid}"] = ("s",
                 f"{sel_action} - Status: **{new_status}**")
             st.rerun()
         except Exception as ex:
             st.error(f"Action failed: {ex}")
+
+def _notify_next(call_id, call_number, new_status, mid, actor_name, comment=""):
+    """Send notification to users who need to act on the next workflow step."""
+    from datetime import datetime, timedelta
+    from db.connection import fetchall
+    _now = (datetime.utcnow() + timedelta(hours=5, minutes=30)).strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Map status to who should be notified
+    status_to_roles = {
+        "DEPT REVIEW":           ["HoD"],
+        "HEAD-UPS REVIEW":       ["HEAD-UPS"],
+        "COORDINATOR REVIEW":    ["SysAdmin"],
+        "ASSIGNED":              [],  # Technician notified via assignee
+        "PARTS NEEDED":          ["SysAdmin"],
+        "COST ESTIMATED":        ["HEAD-UPS"],
+        "HEAD-UPS BUDGET REVIEW":["HEAD-UPS"],
+        "BUDGET REVIEW":         ["HoD"],
+        "BUDGET APPROVED":       ["SysAdmin"],
+        "PO RAISED":             ["SysAdmin"],
+        "UNDER REPAIR":          [],  # Technician already knows
+        "REPAIRED":              ["Lab-IC"],
+        "VERIFIED":              ["HoD"],
+        "DEPT ACKNOWLEDGED":     ["HEAD-UPS"],
+        "HEAD-UPS ACKNOWLEDGED": ["SysAdmin","HEAD-UPS"],
+        "REJECTED":              [],  # No further action
+        "FILE CLOSED":           [],  # Done
+    }
+    
+    roles_to_notify = status_to_roles.get(new_status, [])
+    if not roles_to_notify:
+        return
+    
+    try:
+        conn = get_conn()
+        # Get users with these roles for this module
+        for role in roles_to_notify:
+            users = [dict(r) for r in fetchall("""
+                SELECT u.user_id FROM tbl_users u
+                JOIN tbl_user_module_access a ON a.user_id=u.user_id
+                WHERE a.module_id=? AND a.role_name=? AND u.is_active=1
+            """, (mid, role))]
+            for u in users:
+                title = f"Action Required: {call_number} - {new_status}"
+                message = (
+                    f"Complaint **{call_number}** has moved to **{new_status}** "
+                    f"and requires your action.\n"
+                    f"Action by: {actor_name}\n"
+                    + (f"Comment: {comment}" if comment else "")
+                )
+                conn.execute("""
+                    INSERT INTO tbl_notifications 
+                        (to_user_id, from_user_id, module_id, title, message, priority, is_read, created_at)
+                    SELECT ?, ?, ?, ?, ?, 'NORMAL', 0, ?
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM tbl_notifications 
+                        WHERE to_user_id=? AND title=? AND is_read=0
+                    )
+                """, (u["user_id"], None, mid, title, message, _now,
+                      u["user_id"], title))
+        conn.commit(); conn.close()
+    except Exception:
+        pass  # Notifications are best-effort, never block workflow
+
 
 def _update_call_status(call_id, user_id, from_status, action_type, comment):
     _now = _ist().strftime("%Y-%m-%d %H:%M:%S")

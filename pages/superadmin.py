@@ -1,4 +1,4 @@
-"""pages/superadmin.py — SuperAdmin configuration panel"""
+"""pages/superadmin.py â€” SuperAdmin configuration panel"""
 import streamlit as st
 import pandas as pd
 import hashlib, json
@@ -13,7 +13,7 @@ def show():
         st.error("SuperAdmin access only."); return
 
     st.title("Super Admin Configuration Panel")
-    st.info("Configure all 8 modules — item types, fields, workflow rules, users, and departments.")
+    st.info("Configure all 8 modules â€” item types, fields, workflow rules, users, and departments.")
 
     tab1,tab2,tab3,tab4,tab5,tab6 = st.tabs([
         "Modules","Users & Access","Item Types & Fields","Workflow Rules","Departments","Role Management"
@@ -35,7 +35,7 @@ def _modules():
     st.divider()
     c1,c2,c3,c4 = st.columns(4)
     mc=c1.text_input("Code *",key="sa_mc"); mn=c2.text_input("Name *",key="sa_mn")
-    mi=c3.text_input("Icon",value="📦",key="sa_mi"); mo=c4.number_input("Order",value=9,key="sa_mo")
+    mi=c3.text_input("Icon",value="ðŸ“¦",key="sa_mi"); mo=c4.number_input("Order",value=9,key="sa_mo")
     if st.button("Save Module",key="sa_msave"):
         if mc and mn:
             conn=get_conn()
@@ -57,7 +57,7 @@ def _users():
     if users:
         st.dataframe(pd.DataFrame([{
             "ID":u["user_id"],"Name":u["full_name"],"Username":u["username"],
-            "Emp ID":u["employee_id"],"Dept":u.get("dept_name","—"),
+            "Emp ID":u["employee_id"],"Dept":u.get("dept_name","â€”"),
             "SA":"Yes" if u["is_super_admin"] else "","Active":"Yes" if u["is_active"] else "No"
         } for u in users]),use_container_width=True,hide_index=True)
     st.divider()
@@ -67,7 +67,7 @@ def _users():
     u4,u5,u6 = st.columns(3)
     upwd=u4.text_input("Password *",type="password",key="sa_upwd")
     depts=[dict(r) for r in _fa("SELECT * FROM tbl_departments WHERE is_active=1 ORDER BY dept_name")]
-    dm={"— No Dept —":None}; dm.update({d["dept_name"]:d["dept_id"] for d in depts})
+    dm={"â€” No Dept â€”":None}; dm.update({d["dept_name"]:d["dept_id"] for d in depts})
     udept=u5.selectbox("Dept",list(dm.keys()),key="sa_udept"); usa=u6.checkbox("SuperAdmin",key="sa_usa")
     if st.button("Create User",type="primary",key="sa_ucreate"):
         if uname and ufull and uemp and upwd:
@@ -168,10 +168,10 @@ def _workflow():
 
     st.divider()
 
-    # ── Rule selector: choose existing rule to edit, or "Add New Rule" ──
-    rule_opts = {"➕ Add New Rule": None}
+    # â”€â”€ Rule selector: choose existing rule to edit, or "Add New Rule" â”€â”€
+    rule_opts = {"âž• Add New Rule": None}
     rule_opts.update({
-        f"{r['from_status']} → {r['action_label']} → {r['to_status']}": r["rule_id"]
+        f"{r['from_status']} â†’ {r['action_label']} â†’ {r['to_status']}": r["rule_id"]
         for r in rules
     })
     sel_label = st.selectbox(
@@ -187,7 +187,7 @@ def _workflow():
     else:
         st.caption("Fill in the fields below to create a new rule.")
 
-    # ── Form fields, pre-filled if editing ──────────────────────────────
+    # â”€â”€ Form fields, pre-filled if editing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     w1,w2=st.columns(2)
     wf=w1.text_input("From Status *", value=cur["from_status"] if editing else "", key=f"sa_wf_{sel_rule_id}")
     wt=w2.text_input("To Status *",   value=cur["to_status"]   if editing else "", key=f"sa_wt_{sel_rule_id}")
@@ -199,7 +199,7 @@ def _workflow():
     wra=w6.checkbox("Requires Assignee", value=bool(cur["requires_assignee"]) if editing else False, key=f"sa_wra_{sel_rule_id}")
     wact = st.checkbox("Active", value=bool(cur["is_active"]) if editing else True, key=f"sa_wact_{sel_rule_id}")
 
-    btn_label = "💾 Save Changes" if editing else "➕ Add Rule"
+    btn_label = "ðŸ’¾ Save Changes" if editing else "âž• Add Rule"
     if st.button(btn_label, key=f"sa_wsubmit_{sel_rule_id}", type="primary"):
         if wf and wt and wl and wr:
             conn=get_conn()
@@ -235,7 +235,7 @@ def _workflow():
 
     if editing:
         st.divider()
-        if st.button("🗑️ Delete This Rule Permanently", key=f"sa_wdelete_{sel_rule_id}"):
+        if st.button("ðŸ—‘ï¸ Delete This Rule Permanently", key=f"sa_wdelete_{sel_rule_id}"):
             conn=get_conn()
             try:
                 conn.execute("DELETE FROM tbl_workflow_rules WHERE rule_id=?", (sel_rule_id,))
@@ -277,7 +277,9 @@ def _depts():
 
 
 def _role_mgmt():
-    """System-wide role name management — SuperAdmin only."""
+    """System-wide role name management â€” SuperAdmin only."""
+    if st.session_state.get("_sa_role_msg"):
+        st.success(st.session_state.pop("_sa_role_msg"))
     st.subheader("System-wide Role Management")
     st.info(
         "Rename a role across ALL tables and ALL modules simultaneously: "
@@ -322,14 +324,7 @@ def _role_mgmt():
             try:
                 conn = get_conn()
                 conn.execute("INSERT OR IGNORE INTO tbl_sims_roles (role_name, is_system) VALUES (?, 0)", (new_r,))
-                conn.commit(); conn.close()
-                st.success(f"Role **'{new_r}'** registered successfully.")
-                st.info(
-                    f"Next steps to activate **'{new_r}'**:\n"
-                    f"1. Go to **Administration → User Management** → assign this role to a user\n"
-                    f"2. Go to **Super Admin → Workflow Rules** → add **'{new_r}'** to relevant workflow steps\n"
-                    f"3. Optionally configure Role & Privileges for this role"
-                )
+                st.session_state["_sa_role_msg"] = f"Role '{new_r}' registered successfully. Assign it to users via User Management and add to workflow rules as needed."
                 st.rerun()
             except Exception as ex:
                 st.error(f"Failed: {ex}")

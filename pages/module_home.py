@@ -127,6 +127,7 @@ def _render_module_sidebar(module_code, mod, role):
             pnav("🏫  Dept & Lab Setup",      "admin_depts",   "Administration — Dept & Lab Setup")
             pnav("🏭  Suppliers",             "admin_suppliers","Administration — Suppliers")
             pnav("🔐  Role & Privileges",     "admin_matrix",  "Administration — Role & Privileges")
+            pnav("✏️  Rename Roles",          "role_rename",   "Administration — Rename Roles")
             pnav("📜  Audit Log",             "admin_audit",   "Administration — Audit Log")
             if user.get("is_super_admin"):
                 pnav("🆔  Asset UID Format",      "admin_uidfmt",  "Administration — UID Format")
@@ -334,6 +335,10 @@ def _route(subpage, module_code, mod, role, user):
     elif subpage == "admin_matrix":
         from pages.sims_role_permissions import show as rp_show
         rp_show(mc)
+    elif subpage == "role_rename":
+        from pages.role_rename_tool import show as rr_show
+        st.title("✏️ Rename Roles")
+        rr_show(module_code)
 
     elif subpage == "admin_audit":
         from pages.common_admin import show_audit

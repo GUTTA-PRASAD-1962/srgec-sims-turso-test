@@ -494,6 +494,7 @@ def _dept_view(mod, user=None, role=None):
         dept_name = dict(dept_row)["dept_name"] if dept_row else "Your Department"
         st.info(f"Showing assets for: **{dept_name}**")
         dept_id = _user_dept_id
+        sel_d = dept_name
     else:
         depts = [dict(r) for r in _fa("SELECT * FROM tbl_departments WHERE is_active=1 ORDER BY dept_name")]
         if not depts: st.info("No departments."); return

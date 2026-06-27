@@ -174,9 +174,14 @@ def _route(subpage, module_code, mod, role, user):
             with tab6: _edit_delete(user, m)
             with tab7: _dept_view(m, user, role)
         else:
-            tab1,tab2 = st.tabs(["📋 View Central Stock","🔍 Asset Search"])
-            with tab1: _view_stock(m, user, role)
-            with tab2: _asset_search(m, user, role)
+            if role in ("Lab-IC","Technician"):
+                # Lab-IC/Technician only need Asset Search
+                _asset_search(m, user, role)
+            else:
+                # HoD and others see Central Stock + Asset Search
+                tab1,tab2 = st.tabs(["Stock Register","Asset Search"])
+                with tab1: _view_stock(m, user, role)
+                with tab2: _asset_search(m, user, role)
 
     elif subpage == "dept_stock":
         from pages.common_stock import _dept_stock, _dept_view, _new_dept_entry, _get_module
@@ -194,7 +199,7 @@ def _route(subpage, module_code, mod, role, user):
         ])
         with tab1: _dept_stock(m, user, role)
         with tab2: _dept_view(m, user, role)
-        with tab3: _category_summary(m, mid)
+        with tab3: _category_summary(m, mid, user, role)
         with tab4: _new_dept_entry(user, role, m)
         with tab5: _assign_to_lab_sims(m, mid, user, role)
 
@@ -750,15 +755,25 @@ def _raise_complaint_page(user, role, mod, mid):
             st.error(f"Failed to submit complaint: {ex}")
 
 
-def _category_summary(mod, mid):
+def _category_summary(mod, mid, user=None, role=None):
     """Category-wise summary for dept stock."""
     import pandas as pd
-    from db.connection import fetchall as _fa
+    from db.connection import fetchall as _fa, fetchone as _fo2
     st.subheader("Category Summary")
-    depts = [dict(r) for r in _fa("SELECT * FROM tbl_departments WHERE is_active=1 ORDER BY dept_name")]
-    if not depts: st.info("No departments."); return
-    dm   = {d["dept_name"]: d["dept_id"] for d in depts}
-    sel  = st.selectbox("Department", list(dm.keys()), key=f"cs_dept_{mid}")
+    _restricted = ("HoD","Lab-IC","Technician")
+    _udept = (user or {}).get("dept_id")
+    if role in _restricted and _udept:
+        dept_row = _fo2("SELECT dept_name FROM tbl_departments WHERE dept_id=?", (_udept,))
+        sel_dept_name = dict(dept_row)["dept_name"] if dept_row else "Your Department"
+        st.info(f"Showing: **{sel_dept_name}**")
+        dept_id_filter = _udept
+        sel = sel_dept_name
+    else:
+        depts = [dict(r) for r in _fa("SELECT * FROM tbl_departments WHERE is_active=1 ORDER BY dept_name")]
+        if not depts: st.info("No departments."); return
+        dm   = {d["dept_name"]: d["dept_id"] for d in depts}
+        sel  = st.selectbox("Department", list(dm.keys()), key=f"cs_dept_{mid}")
+        dept_id_filter = dm[sel]
     rows = [dict(r) for r in _fa("""
         SELECT it.type_name,
                COUNT(*) AS total,
@@ -769,7 +784,7 @@ def _category_summary(mod, mid):
         JOIN tbl_item_types it ON it.type_id=i.type_id
         WHERE i.module_id=? AND i.dept_id=? AND i.is_deleted=0
         GROUP BY i.type_id ORDER BY total DESC
-    """,(mid, dm[sel]))]
+    """,(mid, dept_id_filter))]
     if not rows: st.info(f"No assets in {sel}."); return
     import pandas as pd
     df = pd.DataFrame(rows)

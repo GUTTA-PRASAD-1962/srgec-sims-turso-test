@@ -107,6 +107,7 @@ def _render_module_sidebar(module_code, mod, role):
         pnav("❌  Cancel / Manage Calls", "cancel_calls",     "Complaints — Cancel / Manage")
         pnav("🔩  Spare Parts Indent",    "spare_indent",  "Complaints — Spare Parts Indent")
         pnav("📄  Closure Report",        "closure_report","Complaints — Closure Report")
+        pnav("❌  Rejection Notice",       "rejection_notice","Complaints — Rejection Notice")
 
         sec("🔒", "Warranty", "#CE93D8")
         pnav("⚠️  Warranty Alerts",       "warranty_alerts","Warranty — Alerts")
@@ -132,7 +133,13 @@ def _render_module_sidebar(module_code, mod, role):
                 pnav("🆔  Asset UID Format",      "admin_uidfmt",  "Administration — UID Format")
 
         sec("👤", "Account", "#B0BEC5")
-        pnav("🔔  Notifications",         "notifications", "Account — Notifications")
+        # Show unread notification count
+        from db.connection import fetchone as _fo_notif
+        _uid = user.get("user_id")
+        _unread = dict(_fo_notif("SELECT COUNT(*) c FROM tbl_notifications WHERE to_user_id=? AND is_read=0",
+                                  (_uid,)) or {"c":0})["c"]
+        _notif_label = f"🔔  Notifications ({_unread})" if _unread > 0 else "🔔  Notifications"
+        pnav(_notif_label, "notifications", "Account — Notifications")
         pnav("🔑  Change Password",       "change_password","Account — Change Password")
 
 
@@ -276,6 +283,10 @@ def _route(subpage, module_code, mod, role, user):
     elif subpage == "closure_report":
         from pages.call_report import show as cr_show
         cr_show(module_code)
+    elif subpage == "rejection_notice":
+        from pages.call_report import show_rejection_notice as rn_show
+        st.title("❌ Complaint Rejection Notice")
+        rn_show(module_code)
     elif subpage == "warranty_alerts":
         from pages.common_warranty import _alerts
         st.title(f"{icon} {name} — Warranty Alerts")

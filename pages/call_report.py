@@ -245,3 +245,96 @@ def _generate_docx(data):
     except Exception as ex:
         st.error(f"Failed: {ex}")
         return None
+
+
+def show_rejection_notice(module_code):
+    """Generate a Rejection Notice for REJECTED complaints."""
+    from db.connection import fetchone as _fo2, fetchall as _fa2
+    from utils.auth import current_user, require_module_access
+    import subprocess, json, os
+    role = require_module_access(module_code)
+    user = current_user()
+    mod  = dict(_fo2("SELECT * FROM tbl_modules WHERE module_code=?", (module_code,)) or {})
+    if not mod: st.error("Module not found."); return
+    mid  = mod["module_id"]
+
+    if role not in ("SuperAdmin","SysAdmin","Coordinator","HEAD-UPS","HoD"):
+        st.warning("Rejection Notice is for SysAdmin / HoD / HEAD-UPS only."); return
+
+    # Get rejected complaints
+    calls = [dict(r) for r in _fa2("""
+        SELECT c.call_id, c.call_number, c.call_status, c.created_at,
+               i.unique_item_id, i.description AS item_desc,
+               d.dept_name, u.full_name AS raised_by_name
+        FROM tbl_calls c
+        LEFT JOIN tbl_items i ON i.item_id=c.item_id
+        LEFT JOIN tbl_users u ON u.user_id=c.raised_by
+        LEFT JOIN tbl_departments d ON d.dept_id=c.dept_id
+        WHERE c.module_id=? AND c.call_status='REJECTED'
+        ORDER BY c.created_at DESC
+    """, (mid,))]
+
+    if not calls:
+        st.info("No rejected complaints found."); return
+
+    opts = {f"{c['call_number']} | {c.get('unique_item_id','-')} | {c.get('dept_name','-')}": c
+            for c in calls}
+    sel_label = st.selectbox("Select rejected complaint:", list(opts.keys()), key="rjt_sel")
+    sel = opts[sel_label]
+
+    if st.button("Generate Rejection Notice", type="primary", key="rjt_gen"):
+        # Get workflow timeline
+        wf = [dict(r) for r in _fa2("""
+            SELECT wl.action_type, wl.action_comment, wl.action_at,
+                   wl.from_status, wl.to_status, u.full_name AS actor_name
+            FROM tbl_call_workflow wl
+            LEFT JOIN tbl_users u ON u.user_id=wl.action_by
+            WHERE wl.call_id=? ORDER BY wl.action_at ASC
+        """, (sel["call_id"],))]
+
+        # Find rejection step
+        rejection_step = next((w for w in reversed(wf) if w["to_status"]=="REJECTED"), None)
+        rejected_by = rejection_step.get("actor_name","-") if rejection_step else "-"
+        rejection_reason = rejection_step.get("action_comment","-") if rejection_step else "-"
+        rejection_at = str(rejection_step.get("action_at",""))[:16] if rejection_step else "-"
+        rejection_stage = rejection_step.get("from_status","-") if rejection_step else "-"
+
+        data = {
+            "type": "rejection_notice",
+            "module_name": mod.get("module_name",""),
+            "call_number": sel["call_number"],
+            "asset_uid": sel.get("unique_item_id","-"),
+            "asset_desc": sel.get("item_desc","-"),
+            "dept_name": sel.get("dept_name","-"),
+            "raised_by": sel.get("raised_by_name","-"),
+            "raised_at": str(sel.get("created_at",""))[:16],
+            "rejected_by": rejected_by,
+            "rejection_reason": rejection_reason,
+            "rejection_at": rejection_at,
+            "rejection_stage": rejection_stage,
+            "timeline": [{"step": w["action_type"], "actor": w.get("actor_name","-"),
+                          "at": str(w.get("action_at",""))[:16],
+                          "comment": w.get("action_comment","")} for w in wf]
+        }
+
+        json_path = "rejection_notice_data.json"
+        with open(json_path, "w") as f:
+            json.dump(data, f)
+
+        result = subprocess.run(
+            ["node", "generate_rejection_notice.js"],
+            capture_output=True, text=True
+        )
+        if result.returncode == 0 and os.path.exists("rejection_notice.docx"):
+            with open("rejection_notice.docx", "rb") as f:
+                docx_bytes = f.read()
+            fname = f"Rejection_Notice_{sel['call_number'].replace('/','-')}.docx"
+            st.download_button(
+                f"Download {fname}", docx_bytes,
+                file_name=fname,
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                key="rjt_dl"
+            )
+            st.success("Rejection Notice ready. Click above to download.")
+        else:
+            st.error(f"Generation failed: {result.stderr}")

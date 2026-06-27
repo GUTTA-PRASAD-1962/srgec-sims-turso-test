@@ -265,7 +265,7 @@ def _issue_to_dept(user, role, mod):
 
 
 # ══ TAB 3 — VIEW CENTRAL STOCK ═══════════════════════════════════
-def _view_stock(mod):
+def _view_stock(mod, user=None, role=None):
     _flash()
     mid = mod["module_id"]
     st.subheader("Central Stock Register")
@@ -346,18 +346,31 @@ def _view_stock(mod):
 
 
 # ══ TAB 4 — DEPT STOCK REGISTER ══════════════════════════════════
-def _dept_stock(mod):
+def _dept_stock(mod, user=None, role=None):
     _flash()
     mid = mod["module_id"]
     st.subheader("Department Stock Register")
-    rows = [dict(r) for r in _fa("""
-        SELECT ds.*, d.dept_name, it.type_name, inv.invoice_number
-        FROM tbl_dept_stock ds
-        JOIN tbl_departments d ON d.dept_id=ds.dept_id
-        JOIN tbl_item_types it ON it.type_id=ds.type_id
-        LEFT JOIN tbl_invoices inv ON inv.invoice_id=ds.invoice_id
-        WHERE ds.module_id=? ORDER BY ds.entry_date DESC
-    """,(mid,))]
+    # Department filter based on role
+    _restricted_roles = ("HoD","Lab-IC","Technician")
+    _dept_id = (user or {}).get("dept_id") if role in _restricted_roles else None
+    if _dept_id:
+        rows = [dict(r) for r in _fa("""
+            SELECT ds.*, d.dept_name, it.type_name, inv.invoice_number
+            FROM tbl_dept_stock ds
+            JOIN tbl_departments d ON d.dept_id=ds.dept_id
+            JOIN tbl_item_types it ON it.type_id=ds.type_id
+            LEFT JOIN tbl_invoices inv ON inv.invoice_id=ds.invoice_id
+            WHERE ds.module_id=? AND ds.dept_id=? ORDER BY ds.entry_date DESC
+        """,(mid, _dept_id))]
+    else:
+        rows = [dict(r) for r in _fa("""
+            SELECT ds.*, d.dept_name, it.type_name, inv.invoice_number
+            FROM tbl_dept_stock ds
+            JOIN tbl_departments d ON d.dept_id=ds.dept_id
+            JOIN tbl_item_types it ON it.type_id=ds.type_id
+            LEFT JOIN tbl_invoices inv ON inv.invoice_id=ds.invoice_id
+            WHERE ds.module_id=? ORDER BY ds.entry_date DESC
+        """,(mid,))]
     if not rows: st.info("No DSR entries."); return
     df = pd.DataFrame([{
         "Dept":r["dept_name"],"Type":r["type_name"],"Description":r["description"],
@@ -370,7 +383,7 @@ def _dept_stock(mod):
 
 
 # ══ TAB 5 — ASSET SEARCH ═════════════════════════════════════════
-def _asset_search(mod):
+def _asset_search(mod, user=None, role=None):
     _flash()
     mid = mod["module_id"]
     st.subheader("Asset Search")
@@ -467,7 +480,7 @@ def _edit_delete(user, mod):
 
 
 # ══ TAB 7 — DEPT-WISE VIEW ════════════════════════════════════════
-def _dept_view(mod):
+def _dept_view(mod, user=None, role=None):
     _flash()
     mid = mod["module_id"]
     st.subheader("Department-wise Asset View")

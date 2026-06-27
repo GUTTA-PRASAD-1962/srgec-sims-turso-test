@@ -169,14 +169,14 @@ def _route(subpage, module_code, mod, role, user):
             with tab1: _new_entry(user, role, m)
             with tab2: _bulk_upload(m, m["module_id"], user)
             with tab3: _issue_to_dept(user, role, m)
-            with tab4: _view_stock(m)
-            with tab5: _asset_search(m)
+            with tab4: _view_stock(m, user, role)
+            with tab5: _asset_search(m, user, role)
             with tab6: _edit_delete(user, m)
-            with tab7: _dept_view(m)
+            with tab7: _dept_view(m, user, role)
         else:
             tab1,tab2 = st.tabs(["📋 View Central Stock","🔍 Asset Search"])
-            with tab1: _view_stock(m)
-            with tab2: _asset_search(m)
+            with tab1: _view_stock(m, user, role)
+            with tab2: _asset_search(m, user, role)
 
     elif subpage == "dept_stock":
         from pages.common_stock import _dept_stock, _dept_view, _new_dept_entry, _get_module
@@ -192,8 +192,8 @@ def _route(subpage, module_code, mod, role, user):
             "➕ Manual Department Entry",
             "🏷 Assign to Lab",
         ])
-        with tab1: _dept_stock(m)
-        with tab2: _dept_view(m)
+        with tab1: _dept_stock(m, user, role)
+        with tab2: _dept_view(m, user, role)
         with tab3: _category_summary(m, mid)
         with tab4: _new_dept_entry(user, role, m)
         with tab5: _assign_to_lab_sims(m, mid, user, role)
@@ -302,13 +302,13 @@ def _route(subpage, module_code, mod, role, user):
         from pages.common_stock import _asset_search, _get_module
         m = _get_module(mc)
         st.title(f"{icon} {name} — Asset Search & Edit")
-        _asset_search(m)
+        _asset_search(m, user, role)
 
     elif subpage == "case_sheets":
         from pages.common_stock import _asset_search, _get_module
         m = _get_module(mc)
         st.title(f"{icon} {name} — Case Sheets")
-        _asset_search(m)
+        _asset_search(m, user, role)
 
     # ── Reports ────────────────────────────────────────────────────
     elif subpage == "reports":

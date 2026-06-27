@@ -298,6 +298,8 @@ def _view_stock(mod, user=None, role=None):
             st.info("No invoice scans uploaded yet.")
 
     # Dept distribution
+    _restricted_r = ("HoD","Lab-IC","Technician")
+    _udept = (user or {}).get("dept_id")
     st.markdown("#### Department-wise Distribution")
     try:
         dist = [dict(r) for r in _fa("""
@@ -484,11 +486,20 @@ def _dept_view(mod, user=None, role=None):
     _flash()
     mid = mod["module_id"]
     st.subheader("Department-wise Asset View")
-    depts = [dict(r) for r in _fa("SELECT * FROM tbl_departments WHERE is_active=1 ORDER BY dept_name")]
-    if not depts: st.info("No departments."); return
-    dm      = {d["dept_name"]: d["dept_id"] for d in depts}
-    sel_d   = st.selectbox("Department",list(dm.keys()),key=f"{mid}_dv_dept")
-    dept_id = dm[sel_d]
+    _restricted = ("HoD","Lab-IC","Technician")
+    _user_dept_id = (user or {}).get("dept_id")
+    if role in _restricted and _user_dept_id:
+        # Lock to user's own department
+        dept_row = _fo("SELECT dept_name FROM tbl_departments WHERE dept_id=?", (_user_dept_id,))
+        dept_name = dict(dept_row)["dept_name"] if dept_row else "Your Department"
+        st.info(f"Showing assets for: **{dept_name}**")
+        dept_id = _user_dept_id
+    else:
+        depts = [dict(r) for r in _fa("SELECT * FROM tbl_departments WHERE is_active=1 ORDER BY dept_name")]
+        if not depts: st.info("No departments."); return
+        dm      = {d["dept_name"]: d["dept_id"] for d in depts}
+        sel_d   = st.selectbox("Department",list(dm.keys()),key=f"{mid}_dv_dept")
+        dept_id = dm[sel_d]
     items   = [dict(r) for r in _fa("""
         SELECT i.unique_item_id, it.type_name, i.description, i.make, i.model,
                i.serial_number, i.item_status, l.location_name, i.warranty_to

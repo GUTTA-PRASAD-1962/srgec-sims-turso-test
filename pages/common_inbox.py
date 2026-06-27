@@ -624,7 +624,7 @@ def _notify_next(call_id, call_number, new_status, mid, actor_name, comment=""):
         "VERIFIED":              ["HoD"],
         "DEPT ACKNOWLEDGED":     ["HEAD-UPS"],
         "HEAD-UPS ACKNOWLEDGED": ["SysAdmin","HEAD-UPS"],
-        "REJECTED":              [],  # No further action
+        "REJECTED":              ["SysAdmin","HEAD-UPS"],  # Notify on rejection
         "FILE CLOSED":           [],  # Done
     }
     
@@ -633,7 +633,7 @@ def _notify_next(call_id, call_number, new_status, mid, actor_name, comment=""):
         return
     
     try:
-        conn = get_conn()
+        from db.connection import execute as _db_execute
         # Get users with these roles for this module
         for role in roles_to_notify:
             users = [dict(r) for r in fetchall("""
@@ -644,17 +644,16 @@ def _notify_next(call_id, call_number, new_status, mid, actor_name, comment=""):
             for u in users:
                 title = f"Action Required: {call_number} - {new_status}"
                 message = (
-                    f"Complaint **{call_number}** has moved to **{new_status}** "
-                    f"and requires your action.\n"
-                    f"Action by: {actor_name}\n"
+                    f"Complaint {call_number} "
+                    f"has moved to {new_status} and requires your action. "
+                    f"Action by: {actor_name}. "
                     + (f"Comment: {comment}" if comment else "")
                 )
-                conn.execute("""
+                _db_execute("""
                     INSERT INTO tbl_notifications 
                         (to_user_id, from_user_id, module_id, title, message, priority, is_read, created_at)
                     VALUES (?, ?, ?, ?, ?, 'NORMAL', 0, ?)
                 """, (u["user_id"], None, mid, title, message, _now))
-        conn.commit(); conn.close()
     except Exception:
         pass  # Notifications are best-effort, never block workflow
 

@@ -358,39 +358,6 @@ def _indent_pending(user, role, mod, mid):
         st.markdown(f"**Grand Total: Rs.{sum(p['total_cost'] for p in parts):,.2f}**")
     else:
         st.info("No spare parts items raised for this complaint yet.")
-    # Edit Indent — SysAdmin only, when complaint is at COST ESTIMATED (revised estimate requested)
-    if role in ("SuperAdmin","SysAdmin") and call["call_status"] == "COST ESTIMATED" and parts:
-        st.divider()
-        st.markdown("#### Edit Spare Parts Indent (Revised Estimate)")
-        st.caption("Update quantities and costs below, then forward the revised estimate to HEAD-UPS via My Inbox.")
-        for p in parts:
-            with st.expander(f"Edit: {p['description']}", expanded=True):
-                c1,c2,c3,c4 = st.columns(4)
-                new_desc = c1.text_input("Part", value=p["description"],
-                                          key=f"ei_desc_{p['indent_id']}")
-                new_qty  = c2.number_input("Qty", min_value=1, value=int(p["quantity"]),
-                                            key=f"ei_qty_{p['indent_id']}")
-                new_cost = c3.number_input("Unit Cost Rs.", min_value=0.0,
-                                            value=float(p["cost_per_unit"]), step=10.0,
-                                            key=f"ei_cost_{p['indent_id']}")
-                new_src  = c4.text_input("Source/Vendor", value=p.get("source","") or "",
-                                          key=f"ei_src_{p['indent_id']}")
-                if st.button(f"Update this item", key=f"ei_save_{p['indent_id']}"):
-                    try:
-                        from db.connection import get_conn as _gc2
-                        conn2 = _gc2()
-                        conn2.execute("""
-                            UPDATE tbl_spare_indent
-                            SET description=?, quantity=?, cost_per_unit=?, total_cost=?, source=?
-                            WHERE indent_id=?
-                        """, (new_desc.strip(), new_qty, new_cost,
-                              new_qty * new_cost, new_src.strip(), p["indent_id"]))
-                        conn2.commit(); conn2.close()
-                        st.success(f"Updated: {new_desc} x{new_qty} @ Rs.{new_cost}")
-                        st.rerun()
-                    except Exception as ex:
-                        st.error(f"Failed: {ex}")
-
     st.divider()
     st.info(
         "To take action on this complaint, go to Complaints -> My Inbox -> Pending My Action."
@@ -509,6 +476,23 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
             t_opts = {t["full_name"]: t["user_id"] for t in techs}
             pick   = st.selectbox("Assign Technician *",list(t_opts.keys()),key=f"ut_{k}")
             assignee_id = t_opts[pick]
+    # Inline spare parts form for Technician
+    if sel_action == "Raise Spare Parts Indent":
+        st.markdown("#### Spare Parts Required")
+        st.caption("Enter the parts needed for repair. This will be sent to the coordinator for cost estimation.")
+        n_parts = st.number_input("Number of parts required", min_value=1, max_value=20, value=1,
+                                   key=f"sp_n_{k}")
+        sp_items = []
+        for i in range(int(n_parts)):
+            st.markdown(f"**Part {i+1}**")
+            sp1,sp2,sp3 = st.columns(3)
+            sp_desc = sp1.text_input("Part Description *", key=f"sp_desc_{k}_{i}",
+                                      placeholder="e.g. Battery 12V 7Ah")
+            sp_qty  = sp2.number_input("Quantity", min_value=1, value=1, key=f"sp_qty_{k}_{i}")
+            sp_src  = sp3.text_input("Source/Vendor", key=f"sp_src_{k}_{i}",
+                                      placeholder="e.g. Local market")
+            sp_items.append({"desc": sp_desc, "qty": sp_qty, "src": sp_src})
+
     # Inline cost estimation form for SysAdmin
     if sel_action in ("Prepare Cost Estimate", "Forward Cost Estimate to HEAD-UPS"):
         parts_to_edit = [dict(r) for r in _fa(
@@ -540,6 +524,34 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
         if comment_required and not comment.strip():
             st.error("Comments required for this action.")
             return
+        # Save spare parts indent if applicable
+        if sel_action == "Raise Spare Parts Indent":
+            sp_items_to_save = []
+            n = st.session_state.get(f"sp_n_{k}", 1)
+            for i in range(int(n)):
+                desc = st.session_state.get(f"sp_desc_{k}_{i}", "").strip()
+                qty  = st.session_state.get(f"sp_qty_{k}_{i}", 1)
+                src  = st.session_state.get(f"sp_src_{k}_{i}", "").strip()
+                if desc:
+                    sp_items_to_save.append({"desc": desc, "qty": qty, "src": src})
+            if not sp_items_to_save:
+                st.error("Please enter at least one part description.")
+                return
+            try:
+                conn3 = get_conn()
+                for it in sp_items_to_save:
+                    conn3.execute("""
+                        INSERT INTO tbl_spare_indent
+                            (module_id, call_id, prepared_by, description, quantity,
+                             cost_per_unit, total_cost, source, indent_status)
+                        VALUES (?, ?, ?, ?, ?, 0, 0, ?, 'PENDING')
+                    """, (mid, call["call_id"], user["user_id"],
+                          it["desc"], it["qty"], it["src"]))
+                conn3.commit(); conn3.close()
+            except Exception as ex:
+                st.error(f"Failed to save parts: {ex}")
+                return
+
         # Save cost estimate if applicable
         if sel_action in ("Prepare Cost Estimate", "Forward Cost Estimate to HEAD-UPS"):
             parts_to_save = [dict(r) for r in _fa(

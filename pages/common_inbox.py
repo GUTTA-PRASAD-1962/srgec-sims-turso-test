@@ -450,6 +450,29 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
             } for p in parts])
             st.dataframe(df_parts, use_container_width=True, hide_index=True)
             st.markdown(f"**Grand Total: Rs.{sum(p['total_cost'] for p in parts):,.2f}**")
+            # Show linked invoice if available
+            invoice = _fo("""
+                SELECT inv.invoice_number, inv.invoice_date, inv.total_amount,
+                       inv.invoice_scan_path, inv.received_by,
+                       u.full_name AS received_by_name
+                FROM tbl_invoices inv
+                LEFT JOIN tbl_users u ON u.user_id=inv.received_by
+                WHERE inv.remarks LIKE ?
+                ORDER BY inv.invoice_id DESC LIMIT 1
+            """, (f"%{call.get('call_number','')}%",))
+            if invoice:
+                invoice = dict(invoice)
+                st.divider()
+                st.markdown("#### Invoice Details")
+                c1,c2,c3 = st.columns(3)
+                c1.markdown(f"**Invoice No:** {invoice['invoice_number']}")
+                c2.markdown(f"**Date:** {str(invoice.get('invoice_date',''))[:10]}")
+                c3.markdown(f"**Amount:** Rs.{float(invoice.get('total_amount',0)):,.2f}")
+                if invoice.get("received_by_name"):
+                    st.caption(f"Received by: {invoice['received_by_name']}")
+                if invoice.get("invoice_scan_path"):
+                    from utils.helpers import show_scan
+                    show_scan(invoice["invoice_scan_path"])
     steps = [dict(r) for r in _fa("""
         SELECT wl.*, u.full_name AS actor FROM tbl_call_workflow wl
         LEFT JOIN tbl_users u ON u.user_id=wl.action_by

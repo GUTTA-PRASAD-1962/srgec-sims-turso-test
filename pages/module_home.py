@@ -135,7 +135,6 @@ def _render_module_sidebar(module_code, mod, role):
         sec("👤", "Account", "#B0BEC5")
         pnav("📋  Circulars",            "circulars",     "Account — Circulars")
         pnav("🔑  Change Password",       "change_password","Account — Change Password")
-        pnav("📋  Circulars",            "circulars",     "Account — Circulars")
 
 
 def _route(subpage, module_code, mod, role, user):

@@ -494,7 +494,7 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
             sp_items.append({"desc": sp_desc, "qty": sp_qty, "src": sp_src})
 
     # Inline cost estimation form for SysAdmin
-    if sel_action in ("Prepare Cost Estimate", "Forward Cost Estimate to HEAD-UPS"):
+    if sel_action in ("Prepare Cost Estimate", "Forward Cost Estimate to HEAD-UPS", "Forward to Dept HoD for Budget Approval"):
         parts_to_edit = [dict(r) for r in _fa(
             "SELECT * FROM tbl_spare_indent WHERE call_id=? ORDER BY indent_id",
             (call["call_id"],))]
@@ -553,7 +553,7 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
                 return
 
         # Save cost estimate if applicable
-        if sel_action in ("Prepare Cost Estimate", "Forward Cost Estimate to HEAD-UPS"):
+        if sel_action in ("Prepare Cost Estimate", "Forward Cost Estimate to HEAD-UPS", "Forward to Dept HoD for Budget Approval"):
             parts_to_save = [dict(r) for r in _fa(
                 "SELECT * FROM tbl_spare_indent WHERE call_id=? ORDER BY indent_id",
                 (call["call_id"],))]

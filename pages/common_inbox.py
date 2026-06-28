@@ -431,7 +431,8 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
 
     spare_statuses = [
         "PARTS NEEDED","COST ESTIMATED","HEAD-UPS BUDGET REVIEW",
-        "BUDGET REVIEW","BUDGET APPROVED","ON HOLD","PO RAISED","UNDER REPAIR"
+        "BUDGET REVIEW","BUDGET APPROVED","ON HOLD","PO RAISED","UNDER REPAIR",
+        "REPAIRED","DEPT ACKNOWLEDGED","HEAD-UPS ACKNOWLEDGED","FILE CLOSED"
     ]
     if status in spare_statuses:
         parts = [dict(r) for r in _fa(

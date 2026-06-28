@@ -450,8 +450,9 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
             } for p in parts])
             st.dataframe(df_parts, use_container_width=True, hide_index=True)
             st.markdown(f"**Grand Total: Rs.{sum(p['total_cost'] for p in parts):,.2f}**")
-            # Show linked invoice if available
-            invoice = _fo("""
+            # Show linked invoice - restricted to SysAdmin, HEAD-UPS, HoD only
+            if role in ("SuperAdmin","SysAdmin","HEAD-UPS","HoD","Coordinator"):
+             invoice = _fo("""
                 SELECT inv.invoice_number, inv.invoice_date, inv.total_amount,
                        inv.invoice_scan_path, inv.received_by,
                        u.full_name AS received_by_name
@@ -460,7 +461,7 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
                 WHERE inv.remarks LIKE ?
                 ORDER BY inv.invoice_id DESC LIMIT 1
             """, (f"%{call.get('call_number','')}%",))
-            if invoice:
+             if invoice:
                 invoice = dict(invoice)
                 st.divider()
                 st.markdown("#### Invoice Details")

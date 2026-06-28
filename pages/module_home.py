@@ -145,7 +145,7 @@ def _route(subpage, module_code, mod, role, user):
     name = mod.get("module_name","")
 
     if subpage == "dashboard":
-        _module_dashboard(mod, role)
+        _module_dashboard(mod, role, user)
 
     # ── Stock Register sub-pages ───────────────────────────────────
     elif subpage in ("central_stock","asset_search","case_sheets","new_entry","issue_to_dept"):
@@ -366,7 +366,7 @@ def _route(subpage, module_code, mod, role, user):
         acct_show()
 
     else:
-        _module_dashboard(mod, role)
+        _module_dashboard(mod, role, user)
 
 
 def _assign_to_lab_sims(mod, mid, user, role):
@@ -800,7 +800,7 @@ def _category_summary(mod, mid, user=None, role=None):
     m3.metric("Faulty", sum(r["faulty"] for r in rows))
 
 
-def _module_dashboard(mod, role):
+def _module_dashboard(mod, role, user=None):
     """Module-specific dashboard with metrics."""
     mid = mod["module_id"]
     mc  = mod["module_code"]
@@ -808,22 +808,36 @@ def _module_dashboard(mod, role):
     st.title(f"{mod['module_icon']} {mod['module_name']} — Dashboard")
     st.caption(f"Your role: **{role}**")
 
-    # Metrics
+    # Metrics - filter by dept for restricted roles
+    _restricted = ("Lab-IC","Technician","HoD")
+    _dept_id = (user or {}).get("dept_id") if role in _restricted else None
     try:
-        total   = dict(_fo("SELECT COUNT(*) c FROM tbl_items WHERE module_id=? AND is_deleted=0",(mid,)) or {"c":0})["c"]
-        central = dict(_fo("SELECT COUNT(*) c FROM tbl_items WHERE module_id=? AND dept_id IS NULL AND is_deleted=0",(mid,)) or {"c":0})["c"]
-        open_c  = dict(_fo("SELECT COUNT(*) c FROM tbl_calls WHERE module_id=? AND call_status='OPEN'",(mid,)) or {"c":0})["c"]
-        working = dict(_fo("SELECT COUNT(*) c FROM tbl_items WHERE module_id=? AND item_status='WORKING' AND is_deleted=0",(mid,)) or {"c":0})["c"]
-        faulty  = total - working
-
-        m1,m2,m3,m4,m5 = st.columns(5)
-        m1.metric("Total Assets",   total)
-        m2.metric("Central Stock",  central)
-        m3.metric("Open Complaints",open_c)
-        m4.metric("Working",        working)
-        m5.metric("Faulty",         faulty)
+        if _dept_id:
+            total   = dict(_fo("SELECT COUNT(*) c FROM tbl_items WHERE module_id=? AND dept_id=? AND is_deleted=0",(mid,_dept_id)) or {"c":0})["c"]
+            open_c  = dict(_fo("""SELECT COUNT(*) c FROM tbl_calls c2
+                JOIN tbl_items i ON i.item_id=c2.item_id
+                WHERE c2.module_id=? AND i.dept_id=?
+                AND c2.call_status NOT IN ('FILE CLOSED','REJECTED')""",(mid,_dept_id)) or {"c":0})["c"]
+            working = dict(_fo("SELECT COUNT(*) c FROM tbl_items WHERE module_id=? AND dept_id=? AND item_status='WORKING' AND is_deleted=0",(mid,_dept_id)) or {"c":0})["c"]
+            faulty  = total - working
+            m1,m2,m3,m4 = st.columns(4)
+            m1.metric("Dept Assets",       total)
+            m2.metric("Active Complaints", open_c)
+            m3.metric("Working",           working)
+            m4.metric("Faulty",            faulty)
+        else:
+            total   = dict(_fo("SELECT COUNT(*) c FROM tbl_items WHERE module_id=? AND is_deleted=0",(mid,)) or {"c":0})["c"]
+            central = dict(_fo("SELECT COUNT(*) c FROM tbl_items WHERE module_id=? AND dept_id IS NULL AND is_deleted=0",(mid,)) or {"c":0})["c"]
+            open_c  = dict(_fo("SELECT COUNT(*) c FROM tbl_calls WHERE module_id=? AND call_status NOT IN ('FILE CLOSED','REJECTED')",(mid,)) or {"c":0})["c"]
+            working = dict(_fo("SELECT COUNT(*) c FROM tbl_items WHERE module_id=? AND item_status='WORKING' AND is_deleted=0",(mid,)) or {"c":0})["c"]
+            faulty  = total - working
+            m1,m2,m3,m4,m5 = st.columns(5)
+            m1.metric("Total Assets",      total)
+            m2.metric("Central Stock",     central)
+            m3.metric("Active Complaints", open_c)
+            m4.metric("Working",           working)
+            m5.metric("Faulty",            faulty)
     except Exception: pass
-
     st.divider()
 
     # Quick actions
@@ -833,14 +847,24 @@ def _module_dashboard(mod, role):
     with col2:
         st.markdown("#### Recent Complaints")
         try:
-            calls = [dict(r) for r in _fa("""
-                SELECT c.call_number, c.call_status, c.created_at,
-                       i.unique_item_id, d.dept_name
-                FROM tbl_calls c
-                LEFT JOIN tbl_items i ON i.item_id=c.item_id
-                LEFT JOIN tbl_departments d ON d.dept_id=c.dept_id
-                WHERE c.module_id=? ORDER BY c.created_at DESC LIMIT 5
-            """,(mid,))]
+            if _dept_id:
+                calls = [dict(r) for r in _fa("""
+                    SELECT c.call_number, c.call_status, c.created_at,
+                           i.unique_item_id, d.dept_name
+                    FROM tbl_calls c
+                    LEFT JOIN tbl_items i ON i.item_id=c.item_id
+                    LEFT JOIN tbl_departments d ON d.dept_id=i.dept_id
+                    WHERE c.module_id=? AND i.dept_id=? ORDER BY c.created_at DESC LIMIT 5
+                """,(mid, _dept_id))]
+            else:
+                calls = [dict(r) for r in _fa("""
+                    SELECT c.call_number, c.call_status, c.created_at,
+                           i.unique_item_id, d.dept_name
+                    FROM tbl_calls c
+                    LEFT JOIN tbl_items i ON i.item_id=c.item_id
+                    LEFT JOIN tbl_departments d ON d.dept_id=i.dept_id
+                    WHERE c.module_id=? ORDER BY c.created_at DESC LIMIT 5
+                """,(mid,))]
             for c in calls:
                 st.markdown(
                     f"**{c['call_number']}** `{c['call_status']}`  \n"
@@ -854,13 +878,22 @@ def _module_dashboard(mod, role):
             from datetime import date, timedelta
             threshold = str(date.today() + timedelta(days=30))
             today     = str(date.today())
-            expiring  = [dict(r) for r in _fa("""
-                SELECT i.unique_item_id, i.description, i.warranty_to
-                FROM tbl_items i
-                WHERE i.module_id=? AND i.is_deleted=0
-                  AND i.warranty_to >= ? AND i.warranty_to <= ?
-                ORDER BY i.warranty_to ASC LIMIT 5
-            """,(mid,today,threshold))]
+            if _dept_id:
+                expiring = [dict(r) for r in _fa("""
+                    SELECT i.unique_item_id, i.description, i.warranty_to
+                    FROM tbl_items i
+                    WHERE i.module_id=? AND i.dept_id=? AND i.is_deleted=0
+                      AND i.warranty_to >= ? AND i.warranty_to <= ?
+                    ORDER BY i.warranty_to ASC LIMIT 5
+                """,(mid,_dept_id,today,threshold))]
+            else:
+                expiring  = [dict(r) for r in _fa("""
+                    SELECT i.unique_item_id, i.description, i.warranty_to
+                    FROM tbl_items i
+                    WHERE i.module_id=? AND i.is_deleted=0
+                      AND i.warranty_to >= ? AND i.warranty_to <= ?
+                    ORDER BY i.warranty_to ASC LIMIT 5
+                """,(mid,today,threshold))]
             if expiring:
                 for e in expiring:
                     st.warning(f"`{e['unique_item_id']}` — expires {e['warranty_to'][:10]}")

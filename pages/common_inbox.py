@@ -201,6 +201,15 @@ def _tab_raise(user, role, mod, mid):
     if not item: st.error("Asset not found in this module."); return
     item = dict(item)
     st.success(f"{item['type_name']} - {item['description']} | {item.get('dept_name','-')} | Status: {item['item_status']}")
+    # Department ownership check - Lab-IC and Technician can only raise for own dept assets
+    if role in ("Lab-IC","Technician") and user.get("dept_id"):
+        asset_dept_id = item.get("dept_id")
+        if asset_dept_id and asset_dept_id != user.get("dept_id"):
+            st.error(
+                f"This asset belongs to **{item.get('dept_name','-')}** department. "
+                f"You can only raise complaints for assets in your own department."
+            )
+            return
     # Check for existing active complaint on this asset
     active_call = _fo("""
         SELECT call_number, call_status FROM tbl_calls

@@ -161,26 +161,6 @@ def _render_table(calls):
     st.dataframe(df, use_container_width=True, hide_index=True)
 
 def _tab_pending(user, role, mod, mid):
-    # Show rejection alerts for SysAdmin and HEAD-UPS
-    if role in ("SuperAdmin","SysAdmin","HEAD-UPS"):
-        rejected = [dict(r) for r in _fa("""
-            SELECT c.call_number, wl.action_comment, wl.action_at, u.full_name AS rejected_by
-            FROM tbl_calls c
-            JOIN tbl_call_workflow wl ON wl.call_id=c.call_id
-            JOIN tbl_users u ON u.user_id=wl.action_by
-            WHERE c.module_id=? AND c.call_status='REJECTED'
-            AND wl.to_status='REJECTED'
-            AND wl.action_at >= datetime('now','+5 hours','+30 minutes','-7 days')
-            ORDER BY wl.action_at DESC LIMIT 5
-        """, (mid,))]
-        if rejected:
-            with st.expander(f"⚠️ {len(rejected)} complaint(s) rejected in last 7 days", expanded=True):
-                for r in rejected:
-                    st.error(
-                        f"**{r['call_number']}** rejected by **{r['rejected_by']}** "
-                        f"on {str(r.get('action_at',''))[:16]}  \n"
-                        f"Reason: {r.get('action_comment','-')}"
-                    )
     role_statuses = _get_role_statuses(mid, role)
     if not role_statuses:
         st.info(f"No pending actions configured for role '{role}'."); return
@@ -612,9 +592,6 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
                              (call.get("item_id"),))
                 st.session_state[f"_report_ready_{mid}"] = call["call_id"]
             conn.commit(); conn.close()
-            # Send notification to next actor
-            _notify_next(call["call_id"], call.get("call_number",""), new_status, mid,
-                        user.get("full_name",""), comment.strip())
             st.session_state[f"_inbox_msg_{mid}"] = ("s",
                 f"{sel_action} - Status: **{new_status}**")
             st.rerun()

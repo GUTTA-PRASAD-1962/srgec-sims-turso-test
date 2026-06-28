@@ -133,14 +133,7 @@ def _render_module_sidebar(module_code, mod, role):
                 pnav("🆔  Asset UID Format",      "admin_uidfmt",  "Administration — UID Format")
 
         sec("👤", "Account", "#B0BEC5")
-        # Show unread notification count
-        from db.connection import fetchone as _fo_notif
-        _uid = user.get("user_id")
-        _unread = dict(_fo_notif("SELECT COUNT(*) c FROM tbl_notifications WHERE to_user_id=? AND is_read=0",
-                                  (_uid,)) or {"c":0})["c"]
-        _notif_label = f"🔔  Notifications ({_unread})" if _unread > 0 else "🔔  Notifications"
-        pnav(_notif_label, "notifications", "Account — Notifications")
-        pnav("🔑  Change Password",       "change_password","Account — Change Password")
+        pnav("📋  Circulars",            "circulars",     "Account — Circulars")
 
 
 def _route(subpage, module_code, mod, role, user):
@@ -361,10 +354,10 @@ def _route(subpage, module_code, mod, role, user):
         uidfmt_show(mc)
 
     # ── Account ────────────────────────────────────────────────────
-    elif subpage == "notifications":
-        from pages.common_notifications import show as notif_show
-        st.title("🔔 Notifications")
-        notif_show()
+    elif subpage == "circulars":
+        from pages.common_circulars import show as circ_show
+        st.title("📋 Circulars & Announcements")
+        circ_show(module_code)
 
     elif subpage == "change_password":
         from pages.common_account import show as acct_show

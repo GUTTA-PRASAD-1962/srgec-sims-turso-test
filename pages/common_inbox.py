@@ -502,6 +502,38 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
                                       placeholder="e.g. Local market")
             sp_items.append({"desc": sp_desc, "qty": sp_qty, "src": sp_src})
 
+    # Inline parts received + invoice entry form
+    if sel_action == "Parts Received — Hand Over":
+        st.markdown("#### Parts Received — Enter Invoice Details")
+        st.caption("Enter procurement details before handing over parts to technician.")
+        # Show spare parts that were ordered
+        ordered_parts = [dict(r) for r in _fa(
+            "SELECT * FROM tbl_spare_indent WHERE call_id=? ORDER BY indent_id",
+            (call["call_id"],)
+        )]
+        if ordered_parts:
+            st.markdown("**Parts ordered:**")
+            for p in ordered_parts:
+                st.markdown(f"- {p['description']} x{p['quantity']} @ Rs.{p.get('cost_per_unit',0):,.2f}")
+        st.divider()
+        pr1, pr2 = st.columns(2)
+        inv_no   = pr1.text_input("Invoice Number *", key=f"pr_inv_{k}",
+                                   placeholder="e.g. INV-2026-001")
+        inv_date = pr2.date_input("Invoice Date *", key=f"pr_dt_{k}")
+        pr3, pr4 = st.columns(2)
+        supplier = pr3.text_input("Supplier Name *", key=f"pr_supp_{k}",
+                                   placeholder="e.g. ABC Electronics")
+        inv_amt  = pr4.number_input("Total Amount Rs. *", min_value=0.0,
+                                     step=100.0, key=f"pr_amt_{k}")
+        inv_scan = st.file_uploader("Upload Invoice (PDF/Image)", 
+                                     type=["pdf","jpg","jpeg","png"],
+                                     key=f"pr_scan_{k}")
+        st.session_state[f"pr_data_{k}"] = {
+            "inv_no": inv_no, "inv_date": str(inv_date),
+            "supplier": supplier, "inv_amt": inv_amt,
+            "has_scan": inv_scan is not None
+        }
+
     # Inline cost estimation form for SysAdmin
     if sel_action in ("Prepare Cost Estimate", "Forward Cost Estimate to HEAD-UPS", "Forward to Dept HoD for Budget Approval"):
         parts_to_edit = [dict(r) for r in _fa(
@@ -559,6 +591,43 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
                 conn3.commit(); conn3.close()
             except Exception as ex:
                 st.error(f"Failed to save parts: {ex}")
+                return
+
+        # Save parts received invoice if applicable
+        if sel_action == "Parts Received — Hand Over":
+            pr_data = st.session_state.get(f"pr_data_{k}", {})
+            inv_no = pr_data.get("inv_no","").strip()
+            supplier = pr_data.get("supplier","").strip()
+            inv_amt = pr_data.get("inv_amt", 0)
+            inv_date = pr_data.get("inv_date", "")
+            if not inv_no or not supplier:
+                st.error("Invoice number and supplier name are required.")
+                return
+            try:
+                from utils.helpers import save_scan
+                scan_path = None
+                # Save invoice to database
+                inv_file = st.session_state.get(f"pr_scan_{k}")
+                if inv_file:
+                    scan_path = save_scan(inv_file, f"INV_{call.get('call_number','')}")
+                conn3 = get_conn()
+                # Insert invoice record
+                inv_id = conn3.execute("""
+                    INSERT INTO tbl_invoices 
+                        (module_id, invoice_number, invoice_date, total_amount,
+                         received_date, received_by, invoice_scan_path, remarks)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """, (mid, inv_no, inv_date, inv_amt, inv_date,
+                      user["user_id"], scan_path,
+                      f"Parts for {call.get('call_number','')}")).lastrowid
+                # Update spare indents with invoice reference
+                conn3.execute(
+                    "UPDATE tbl_spare_indent SET indent_status='PROCURED' WHERE call_id=?",
+                    (call["call_id"],)
+                )
+                conn3.commit(); conn3.close()
+            except Exception as ex:
+                st.error(f"Failed to save invoice: {ex}")
                 return
 
         # Save cost estimate if applicable

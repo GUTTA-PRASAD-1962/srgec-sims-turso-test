@@ -410,6 +410,11 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
     if call.get("assignee_name"):
         c3.markdown(f"**Assignee:** {call['assignee_name']}")
     st.info(f"**Problem:** {call.get('complaint_text','')}")
+    # Show complaint photo if available
+    if call.get("photo_path"):
+        with st.expander("View Complaint Photo"):
+            from utils.helpers import show_scan
+            show_scan(call["photo_path"])
 
     # Show most recent action prominently
     last_action = _fo("""

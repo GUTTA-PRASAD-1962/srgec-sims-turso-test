@@ -93,18 +93,46 @@ def generate_item_id(module_code, dept_code, type_prefix, purchase_date):
 def save_scan(file, prefix=""):
     if not file: return None
     try:
-        scan_dir = Path("uploads/invoices")
-        scan_dir.mkdir(parents=True, exist_ok=True)
-        safe = prefix.replace("/","_").replace(" ","_")
+        safe = prefix.replace("/","_").replace(" ","_").replace("-","_")
         ext  = file.name.split(".")[-1].lower()
-        path = scan_dir / f"{safe}_{datetime.now().strftime('%Y%m%d%H%M%S')}.{ext}"
-        path.write_bytes(file.read())
-        return str(path)
+        blob_name = f"uploads/{safe}_{datetime.now().strftime('%Y%m%d%H%M%S')}.{ext}"
+        file_bytes = file.read()
+        # Try Azure first
+        try:
+            from utils.azure_storage import upload_file, is_azure_configured
+            if is_azure_configured():
+                content_type = "application/pdf" if ext=="pdf" else f"image/{ext}"
+                return upload_file(file_bytes, blob_name, content_type)
+        except Exception:
+            pass
+        # Fallback to local storage
+        local_path = Path(blob_name)
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        local_path.write_bytes(file_bytes)
+        return str(local_path)
     except: return None
 
 
 def show_scan(scan_path):
     if not scan_path: return
+    # Try Azure first
+    try:
+        from utils.azure_storage import get_sas_url, is_azure_configured
+        if is_azure_configured() and not Path(scan_path).exists():
+            sas_url = get_sas_url(scan_path)
+            ext = scan_path.split(".")[-1].lower()
+            if ext in ("jpg","jpeg","png"):
+                st.image(sas_url)
+            elif ext == "pdf":
+                st.markdown(
+                    f'<iframe src="{sas_url}" width="100%" height="520px" ' +
+                    'style="border:1px solid #ddd;border-radius:4px"></iframe>',
+                    unsafe_allow_html=True)
+            st.markdown(f'[Download File]({sas_url})')
+            return
+    except Exception:
+        pass
+    # Fallback to local
     p = Path(scan_path)
     if not p.exists():
         st.caption(f"Scan not found: {scan_path}"); return

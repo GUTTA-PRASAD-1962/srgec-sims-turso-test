@@ -397,6 +397,46 @@ def _indent_all(user, role, mod, mid):
     can_tot = sum(r["total_cost"] for r in cancelled if r.get("total_cost"))
     st.markdown(f"**Active Total: Rs.{act_tot:,.2f}** ({len(active)} indent(s))")
 
+def _show_complaint_docs(call_id, role, mid):
+    """Show all documents uploaded for a complaint."""
+    docs = [dict(r) for r in _fa("""
+        SELECT cd.*, u.full_name AS uploaded_by_name
+        FROM tbl_complaint_docs cd
+        LEFT JOIN tbl_users u ON u.user_id=cd.uploaded_by
+        WHERE cd.call_id=? AND cd.is_active=1
+        ORDER BY cd.uploaded_at ASC
+    """, (call_id,))]
+    if not docs:
+        return
+    # Group by type
+    by_type = {}
+    for d in docs:
+        t = d["doc_type"]
+        by_type.setdefault(t, []).append(d)
+    type_labels = {
+        "PHOTO": "Complaint Photos",
+        "QUOTATION": "Quotations & Comparative Statements",
+        "PO": "Purchase Orders",
+        "INVOICE": "Invoices",
+        "OTHER": "Other Documents"
+    }
+    # Restrict invoice/PO/quotation view
+    restricted_types = ["QUOTATION","PO","INVOICE"]
+    can_see_financials = role in ("SuperAdmin","SysAdmin","HEAD-UPS","HoD","Coordinator")
+    st.divider()
+    st.markdown("#### Complaint Documents")
+    for doc_type, type_docs in by_type.items():
+        if doc_type in restricted_types and not can_see_financials:
+            continue
+        label = type_labels.get(doc_type, doc_type)
+        with st.expander(f"{label} ({len(type_docs)} file(s))", expanded=False):
+            for d in type_docs:
+                col1, col2 = st.columns([3,1])
+                col1.markdown(f"**{d['doc_name']}** — uploaded by {d.get('uploaded_by_name','-')} on {str(d.get('uploaded_at',''))[:16]}")
+                from utils.helpers import show_scan
+                show_scan(d["blob_path"])
+
+
 def _call_detail(call, user, role, mod, mid, ctx=""):
     status = call["call_status"]
     k      = f"{mid}_{ctx}_{call['call_id']}_{status.replace(' ','_')}"
@@ -415,6 +455,9 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
         with st.expander("View Complaint Photo"):
             from utils.helpers import show_scan
             show_scan(call["photo_path"])
+
+    # Show all complaint documents
+    _show_complaint_docs(call["call_id"], role, mid)
 
     # Show most recent action prominently
     last_action = _fo("""
@@ -536,10 +579,11 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
     if sel_action == "Raise Purchase Order":
         st.markdown("#### Upload Purchase Order")
         st.caption("Attach the signed Purchase Order document.")
-        po_file = st.file_uploader(
-            "Upload PO Document",
+        po_files = st.file_uploader(
+            "Upload PO Document (multiple allowed)",
             type=["pdf","jpg","jpeg","png","docx","xlsx"],
-            key=f"po_{k}"
+            key=f"po_{k}",
+            accept_multiple_files=True
         )
 
     if sel_action == "Parts Received — Hand Over":
@@ -602,11 +646,11 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
         st.divider()
         st.markdown("#### Upload Supporting Documents")
         st.caption("Attach quotations, comparative statement, or any supporting documents.")
-        quote_file = st.file_uploader(
-            "Upload Quotation / Comparative Statement",
+        quote_files = st.file_uploader(
+            "Upload Quotation / Comparative Statement (multiple allowed)",
             type=["pdf","jpg","jpeg","png","docx","xlsx","doc","xls"],
             key=f"qf_{k}",
-            accept_multiple_files=False
+            accept_multiple_files=True
         )
 
     if st.button(f"{sel_action}",type="primary",key=f"usub_{k}"):
@@ -615,14 +659,26 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
             return
         # Save PO document if applicable
         if sel_action == "Raise Purchase Order":
-            po_file = st.session_state.get(f"po_{k}")
-            if po_file:
+            po_files = st.session_state.get(f"po_{k}", [])
+            if po_files:
+                if not isinstance(po_files, list):
+                    po_files = [po_files]
                 try:
                     from utils.helpers import save_scan
                     import time
-                    prefix = f"purchase_orders/{call.get('call_number','').replace('-','_')}_{int(time.time())}"
-                    save_scan(po_file, prefix)
-                except Exception:
+                    conn_doc = get_conn()
+                    for pf in po_files:
+                        prefix = f"purchase_orders/{call.get('call_number','').replace('-','_')}_{int(time.time()*1000)}"
+                        blob_path = save_scan(pf, prefix)
+                        if blob_path:
+                            conn_doc.execute("""
+                                INSERT INTO tbl_complaint_docs
+                                    (call_id, module_id, doc_type, doc_name, blob_path, uploaded_by, uploaded_at)
+                                VALUES (?, ?, 'PO', ?, ?, ?, ?)
+                            """, (call["call_id"], mid, pf.name, blob_path,
+                                  user["user_id"], _ist().strftime("%Y-%m-%d %H:%M:%S")))
+                    conn_doc.commit(); conn_doc.close()
+                except Exception as ex:
                     pass
 
         # Save spare parts indent if applicable
@@ -692,14 +748,26 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
 
         # Save quotation/supporting docs if applicable
         if sel_action in ("Prepare Cost Estimate", "Forward Cost Estimate to HEAD-UPS", "Forward to Dept HoD for Budget Approval"):
-            quote_file = st.session_state.get(f"qf_{k}")
-            if quote_file:
+            quote_files = st.session_state.get(f"qf_{k}", [])
+            if quote_files:
+                if not isinstance(quote_files, list):
+                    quote_files = [quote_files]
                 try:
                     from utils.helpers import save_scan
                     import time
-                    prefix = f"quotations/{call.get('call_number','').replace('-','_')}_{int(time.time())}"
-                    save_scan(quote_file, prefix)
-                except Exception:
+                    conn_doc = get_conn()
+                    for qf in quote_files:
+                        prefix = f"quotations/{call.get('call_number','').replace('-','_')}_{int(time.time()*1000)}"
+                        blob_path = save_scan(qf, prefix)
+                        if blob_path:
+                            conn_doc.execute("""
+                                INSERT INTO tbl_complaint_docs
+                                    (call_id, module_id, doc_type, doc_name, blob_path, uploaded_by, uploaded_at)
+                                VALUES (?, ?, 'QUOTATION', ?, ?, ?, ?)
+                            """, (call["call_id"], mid, qf.name, blob_path,
+                                  user["user_id"], _ist().strftime("%Y-%m-%d %H:%M:%S")))
+                    conn_doc.commit(); conn_doc.close()
+                except Exception as ex:
                     pass
 
         # Save cost estimate if applicable

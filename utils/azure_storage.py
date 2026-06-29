@@ -18,8 +18,9 @@ def upload_file(file_bytes, blob_name, content_type="application/octet-stream"):
         client = _get_client()
         container = client.get_container_client(AZURE_CONTAINER_NAME)
         blob = container.get_blob_client(blob_name)
+        from azure.storage.blob import ContentSettings
         blob.upload_blob(file_bytes, overwrite=True,
-                        content_settings={"content_type": content_type})
+                        content_settings=ContentSettings(content_type=content_type))
         return blob_name
     except Exception as ex:
         raise Exception(f"Azure upload failed: {ex}")

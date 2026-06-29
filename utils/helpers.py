@@ -93,9 +93,11 @@ def generate_item_id(module_code, dept_code, type_prefix, purchase_date):
 def save_scan(file, prefix=""):
     if not file: return None
     try:
+        import time
         safe = prefix.replace("/","_").replace(" ","_").replace("-","_")
         ext  = file.name.split(".")[-1].lower()
-        blob_name = f"uploads/{safe}_{datetime.now().strftime('%Y%m%d%H%M%S')}.{ext}"
+        # Use timestamp + microseconds to ensure uniqueness
+        blob_name = f"uploads/{safe}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{int(time.time()*1000)%10000}.{ext}"
         file_bytes = file.read()
         # Try Azure first
         try:

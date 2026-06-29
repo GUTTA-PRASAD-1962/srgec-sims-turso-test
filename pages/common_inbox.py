@@ -227,7 +227,7 @@ def _tab_raise(user, role, mod, mid):
         return
     complaint = st.text_area("Nature of Problem *", key=f"{mid}_raise_cmp", height=100,
                              placeholder="Describe the fault in detail...")
-    photo = st.file_uploader("Attach Photo (optional)", type=["jpg","jpeg","png"], key=f"{mid}_raise_photo")
+    photo = st.file_uploader("Attach Photo/Document (optional)", type=["jpg","jpeg","png","pdf","docx"], key=f"{mid}_raise_photo")
     if st.button("Submit Complaint", type="primary", key=f"{mid}_raise_submit"):
         if not complaint.strip(): st.error("Describe the complaint."); return
         try:
@@ -533,6 +533,15 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
             sp_items.append({"desc": sp_desc, "qty": sp_qty, "src": sp_src})
 
     # Inline parts received + invoice entry form
+    if sel_action == "Raise Purchase Order":
+        st.markdown("#### Upload Purchase Order")
+        st.caption("Attach the signed Purchase Order document.")
+        po_file = st.file_uploader(
+            "Upload PO Document",
+            type=["pdf","jpg","jpeg","png","docx","xlsx"],
+            key=f"po_{k}"
+        )
+
     if sel_action == "Parts Received — Hand Over":
         st.markdown("#### Parts Received — Enter Invoice Details")
         st.caption("Enter procurement details before handing over parts to technician.")
@@ -590,11 +599,32 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
                 })
             total = sum(p["qty"] * p["cost"] for p in updated_parts)
             st.markdown(f"**Grand Total: Rs.{total:,.2f}**")
+        st.divider()
+        st.markdown("#### Upload Supporting Documents")
+        st.caption("Attach quotations, comparative statement, or any supporting documents.")
+        quote_file = st.file_uploader(
+            "Upload Quotation / Comparative Statement",
+            type=["pdf","jpg","jpeg","png","docx","xlsx","doc","xls"],
+            key=f"qf_{k}",
+            accept_multiple_files=False
+        )
 
     if st.button(f"{sel_action}",type="primary",key=f"usub_{k}"):
         if comment_required and not comment.strip():
             st.error("Comments required for this action.")
             return
+        # Save PO document if applicable
+        if sel_action == "Raise Purchase Order":
+            po_file = st.session_state.get(f"po_{k}")
+            if po_file:
+                try:
+                    from utils.helpers import save_scan
+                    import time
+                    prefix = f"purchase_orders/{call.get('call_number','').replace('-','_')}_{int(time.time())}"
+                    save_scan(po_file, prefix)
+                except Exception:
+                    pass
+
         # Save spare parts indent if applicable
         if sel_action == "Raise Spare Parts Indent":
             sp_items_to_save = []
@@ -659,6 +689,18 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
             except Exception as ex:
                 st.error(f"Failed to save invoice: {ex}")
                 return
+
+        # Save quotation/supporting docs if applicable
+        if sel_action in ("Prepare Cost Estimate", "Forward Cost Estimate to HEAD-UPS", "Forward to Dept HoD for Budget Approval"):
+            quote_file = st.session_state.get(f"qf_{k}")
+            if quote_file:
+                try:
+                    from utils.helpers import save_scan
+                    import time
+                    prefix = f"quotations/{call.get('call_number','').replace('-','_')}_{int(time.time())}"
+                    save_scan(quote_file, prefix)
+                except Exception:
+                    pass
 
         # Save cost estimate if applicable
         if sel_action in ("Prepare Cost Estimate", "Forward Cost Estimate to HEAD-UPS", "Forward to Dept HoD for Budget Approval"):

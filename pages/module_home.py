@@ -196,20 +196,12 @@ def _route(subpage, module_code, mod, role, user):
         stat_items_show(module_code)
         return
     elif subpage == "stat_central_stock":
-        from pages.common_stock import _view_stock, _asset_search, _get_module
-        m = _get_module(mc)
-        st.title(f"{icon} {name} — Central Stock")
-        tab1, tab2 = st.tabs(["View Stock", "Asset Search"])
-        with tab1: _view_stock(m, user, role)
-        with tab2: _asset_search(m, user, role)
+        from pages.stat_stock import show_central_stock
+        show_central_stock(module_code)
         return
     elif subpage == "stat_dept_stock":
-        from pages.common_stock import _dept_stock, _dept_view, _get_module
-        m = _get_module(mc)
-        st.title(f"{icon} {name} — Department Stock")
-        tab1, tab2 = st.tabs(["Stock Register", "All Assets"])
-        with tab1: _dept_stock(m, user, role)
-        with tab2: _dept_view(m, user, role)
+        from pages.stat_stock import show_dept_stock
+        show_dept_stock(module_code)
         return
     if subpage == "dashboard":
         _module_dashboard(mod, role, user)

@@ -41,11 +41,21 @@ def show(module_code):
         "All linked spare parts indents are also cancelled automatically."
     )
 
+    # Statuses that are NEVER cancellable - parts physically received, work in progress
+    never_cancelable = ["UNDER REPAIR","REPAIRED","DEPT ACKNOWLEDGED","HEAD-UPS ACKNOWLEDGED"]
+    # PO raised but parts not yet received - cancellable by HEAD-UPS/SuperAdmin only
+    post_po_statuses = ["PO RAISED"]
+    pre_po_statuses = ["DEPT REVIEW","HEAD-UPS REVIEW","COORDINATOR REVIEW","ASSIGNED",
+                       "PARTS NEEDED","COST ESTIMATED","HEAD-UPS BUDGET REVIEW",
+                       "BUDGET REVIEW","ON HOLD","BUDGET APPROVED"]
+
     # Determine which statuses this role can cancel
     if role == "SuperAdmin":
-        cancelable_statuses = None  # all
+        cancelable_statuses = pre_po_statuses + post_po_statuses  # not never_cancelable
+    elif role == "HEAD-UPS":
+        cancelable_statuses = pre_po_statuses + post_po_statuses  # not never_cancelable
     elif role == "SysAdmin":
-        cancelable_statuses = None  # all
+        cancelable_statuses = pre_po_statuses  # cannot cancel after PO raised
     elif role == "HoD":
         cancelable_statuses = ["DEPT REVIEW"]
     elif role == "Lab-IC":
@@ -165,13 +175,27 @@ def show(module_code):
         active_indents = []
 
     st.markdown("### Cancel This Call")
+    is_post_po = sel["call_status"] in post_po_statuses
+    if is_post_po:
+        st.error(
+            "**This complaint has an active Purchase Order or parts already received/repaired.** "
+            "Cancelling now requires a detailed justification as this affects procurement records "
+            "and may need separate financial reconciliation."
+        )
     cancel_reason = st.text_area(
-        "Reason for cancellation *",
-        key=f"{mid}_cancel_reason", height=80,
-        placeholder="e.g. Raised by mistake - asset is working\n"
-                    "OR: Duplicate complaint - already registered\n"
-                    "OR: Problem resolved before technician visit"
+        "Reason for cancellation *" + (" (detailed justification required)" if is_post_po else ""),
+        key=f"{mid}_cancel_reason", height=120 if is_post_po else 80,
+        placeholder=(
+            "Provide detailed justification including: why cancellation is needed at this stage, "
+            "what happens to the PO/parts already ordered, and financial implications."
+            if is_post_po else
+            "e.g. Raised by mistake - asset is working\n"
+            "OR: Duplicate complaint - already registered\n"
+            "OR: Problem resolved before technician visit"
+        )
     )
+    if is_post_po and cancel_reason.strip() and len(cancel_reason.strip()) < 30:
+        st.warning("Please provide a more detailed reason (minimum 30 characters) for post-PO cancellation.")
 
     confirm = st.checkbox(
         f"I confirm cancellation of **{sel['call_number']}** "

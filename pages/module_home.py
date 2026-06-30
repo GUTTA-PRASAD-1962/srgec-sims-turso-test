@@ -66,6 +66,49 @@ def _render_module_sidebar(module_code, mod, role):
             if _can_see(user, mc, priv_key):
                 nav(label, sub)
 
+        # ── STAT module has a completely different sidebar (indent-based, no complaints/maintenance) ──
+        if mc == "STAT":
+            if st.button("🏠  Module Dashboard", type="primary",
+                         use_container_width=True, key=f"snb_{mc}_dash"):
+                st.session_state[f"sub_{mc}"] = "dashboard"; st.rerun()
+            if st.button("◀  Back to Portal", use_container_width=True, key=f"snb_{mc}_back"):
+                st.session_state["sims_module"] = ""
+                st.session_state["page"] = "dashboard"; st.rerun()
+
+            def stat_nav(label, sub):
+                if st.button(label, use_container_width=True, key=f"snb_{mc}_{sub}"):
+                    st.session_state[f"sub_{mc}"] = sub; st.rerun()
+
+            def stat_sec(icon, title, color="#F0A500"):
+                st.markdown(
+                    f'<div style="background:linear-gradient(90deg,#0D2B5E,#1B4F9A);'
+                    f'padding:5px 10px;border-radius:5px;margin:8px 0 3px;'
+                    f'border-left:3px solid {color}">'
+                    f'<span style="color:{color};font-size:0.75rem;font-weight:800">'
+                    f'{icon} {title.upper()}</span></div>',
+                    unsafe_allow_html=True)
+
+            stat_sec("📦", "Stock Register", "#81C784")
+            if role in ("SuperAdmin","SysAdmin"):
+                stat_nav("🏛  Central Stock", "stat_central_stock")
+            if role == "JuniorAssistant" or role == "SuperAdmin":
+                stat_nav("🏢  Department Stock", "stat_dept_stock")
+
+            stat_sec("📝", "Indents", "#EF9A9A")
+            stat_nav("📤  Raise Indent / My Inbox", "stat_indents")
+
+            if role in ("SuperAdmin","SysAdmin"):
+                stat_sec("⚙️", "Administration", "#F48FB1")
+                stat_nav("📋  Item Master", "stat_items")
+                stat_nav("👥  User Management", "admin_users")
+                stat_nav("🏭  Suppliers", "admin_suppliers")
+                stat_nav("🔐  Role & Privileges", "admin_matrix")
+
+            stat_sec("👤", "Account", "#B0BEC5")
+            stat_nav("📋  Circulars", "circulars")
+            stat_nav("🔑  Change Password", "change_password")
+            return  # skip the generic UPS-style sidebar below
+
         def sec(icon, title, color="#F0A500"):
             st.markdown(
                 f'<div style="background:linear-gradient(90deg,#0D2B5E,#1B4F9A);'
@@ -144,6 +187,30 @@ def _route(subpage, module_code, mod, role, user):
     icon = mod.get("module_icon","📦")
     name = mod.get("module_name","")
 
+    if subpage == "stat_indents":
+        from pages.stat_indent import show as stat_show
+        stat_show(module_code)
+        return
+    elif subpage == "stat_items":
+        from pages.stat_items import show as stat_items_show
+        stat_items_show(module_code)
+        return
+    elif subpage == "stat_central_stock":
+        from pages.common_stock import _view_stock, _asset_search, _get_module
+        m = _get_module(mc)
+        st.title(f"{icon} {name} — Central Stock")
+        tab1, tab2 = st.tabs(["View Stock", "Asset Search"])
+        with tab1: _view_stock(m, user, role)
+        with tab2: _asset_search(m, user, role)
+        return
+    elif subpage == "stat_dept_stock":
+        from pages.common_stock import _dept_stock, _dept_view, _get_module
+        m = _get_module(mc)
+        st.title(f"{icon} {name} — Department Stock")
+        tab1, tab2 = st.tabs(["Stock Register", "All Assets"])
+        with tab1: _dept_stock(m, user, role)
+        with tab2: _dept_view(m, user, role)
+        return
     if subpage == "dashboard":
         _module_dashboard(mod, role, user)
 

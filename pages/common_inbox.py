@@ -748,7 +748,9 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
 
         # Save quotation/supporting docs if applicable
         if sel_action in ("Prepare Cost Estimate", "Forward Cost Estimate to HEAD-UPS", "Forward to Dept HoD for Budget Approval"):
-            quote_files = st.session_state.get(f"qf_{k}", [])
+            _qf_widget = st.session_state.get(f"qf_{k}")
+            quote_files = _qf_widget if _qf_widget else []
+            st.write(f"DEBUG: quote_files count = {len(quote_files) if quote_files else 0}")
             if quote_files:
                 if not isinstance(quote_files, list):
                     quote_files = [quote_files]

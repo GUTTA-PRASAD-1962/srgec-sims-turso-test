@@ -513,16 +513,16 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
              if invoice:
                 invoice = dict(invoice)
                 st.divider()
-                st.markdown("#### Invoice Details")
-                c1,c2,c3 = st.columns(3)
-                c1.markdown(f"**Invoice No:** {invoice['invoice_number']}")
-                c2.markdown(f"**Date:** {str(invoice.get('invoice_date',''))[:10]}")
-                c3.markdown(f"**Amount:** Rs.{float(invoice.get('total_amount',0)):,.2f}")
-                if invoice.get("received_by_name"):
-                    st.caption(f"Received by: {invoice['received_by_name']}")
-                if invoice.get("invoice_scan_path"):
-                    from utils.helpers import show_scan
-                    show_scan(invoice["invoice_scan_path"])
+                with st.expander("Invoice Details", expanded=False):
+                    c1,c2,c3 = st.columns(3)
+                    c1.markdown(f"**Invoice No:** {invoice['invoice_number']}")
+                    c2.markdown(f"**Date:** {str(invoice.get('invoice_date',''))[:10]}")
+                    c3.markdown(f"**Amount:** Rs.{float(invoice.get('total_amount',0)):,.2f}")
+                    if invoice.get("received_by_name"):
+                        st.caption(f"Received by: {invoice['received_by_name']}")
+                    if invoice.get("invoice_scan_path"):
+                        from utils.helpers import show_scan
+                        show_scan(invoice["invoice_scan_path"])
     steps = [dict(r) for r in _fa("""
         SELECT wl.*, u.full_name AS actor FROM tbl_call_workflow wl
         LEFT JOIN tbl_users u ON u.user_id=wl.action_by

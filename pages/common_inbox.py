@@ -161,8 +161,6 @@ def _render_table(calls):
     st.dataframe(df, use_container_width=True, hide_index=True)
 
 def _tab_pending(user, role, mod, mid):
-    if st.session_state.get("_debug_qf_count") is not None:
-        st.warning(f"DEBUG: Last quote_files count = {st.session_state.pop('_debug_qf_count')}")
     role_statuses = _get_role_statuses(mid, role)
     if not role_statuses:
         st.info(f"No pending actions configured for role '{role}'."); return
@@ -583,7 +581,7 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
         st.caption("Attach the signed Purchase Order document.")
         po_files = st.file_uploader(
             "Upload PO Document (multiple allowed)",
-            type=["pdf","jpg","jpeg","png","docx","xlsx"],
+            type=["pdf","jpg","jpeg","png","docx","xlsx","csv"],
             key=f"po_{k}",
             accept_multiple_files=True
         )
@@ -650,7 +648,7 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
         st.caption("Attach quotations, comparative statement, or any supporting documents.")
         quote_files = st.file_uploader(
             "Upload Quotation / Comparative Statement (multiple allowed)",
-            type=["pdf","jpg","jpeg","png","docx","xlsx","doc","xls"],
+            type=["pdf","jpg","jpeg","png","docx","xlsx","doc","xls","csv"],
             key=f"qf_{k}",
             accept_multiple_files=True
         )
@@ -752,7 +750,6 @@ def _call_detail(call, user, role, mod, mid, ctx=""):
         if sel_action in ("Prepare Cost Estimate", "Forward Cost Estimate to HEAD-UPS", "Forward to Dept HoD for Budget Approval"):
             _qf_widget = st.session_state.get(f"qf_{k}")
             quote_files = _qf_widget if _qf_widget else []
-            st.session_state["_debug_qf_count"] = len(quote_files) if quote_files else 0
             if quote_files:
                 if not isinstance(quote_files, list):
                     quote_files = [quote_files]

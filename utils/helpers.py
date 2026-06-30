@@ -130,6 +130,14 @@ def show_scan(scan_path):
                     f'<iframe src="{sas_url}" width="100%" height="520px" ' +
                     'style="border:1px solid #ddd;border-radius:4px"></iframe>',
                     unsafe_allow_html=True)
+            elif ext in ("docx","doc","xlsx","xls"):
+                import urllib.parse
+                encoded_url = urllib.parse.quote(sas_url, safe="")
+                viewer_url = f"https://docs.google.com/viewer?url={encoded_url}&embedded=true"
+                st.markdown(
+                    f'<iframe src="{viewer_url}" width="100%" height="520px" ' +
+                    'style="border:1px solid #ddd;border-radius:4px"></iframe>',
+                    unsafe_allow_html=True)
             st.markdown(f'[Download File]({sas_url})')
             return
     except Exception:

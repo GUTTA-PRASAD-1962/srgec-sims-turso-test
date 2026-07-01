@@ -92,12 +92,12 @@ def _new_procurement(user, mid):
                 new_qty = (ex.get("quantity") if isinstance(ex, dict) else ex[1]) + qty
                 stock_id = ex.get("stock_id") if isinstance(ex, dict) else ex[0]
                 conn.execute(
-                    "UPDATE tbl_stat_central_stock SET quantity=?, last_updated=? WHERE stock_id=?",
+                    "UPDATE tbl_stat_central_stock SET quantity=?, updated_at=? WHERE stock_id=?",
                     (new_qty, _ist(), stock_id)
                 )
             else:
                 conn.execute("""
-                    INSERT INTO tbl_stat_central_stock (item_id, quantity, unit, last_updated)
+                    INSERT INTO tbl_stat_central_stock (item_id, quantity, unit, updated_at)
                     VALUES (?, ?, ?, ?)
                 """, (sel_item["item_id"], qty, sel_item["unit_of_measure"], _ist()))
             conn.execute("""
@@ -168,12 +168,12 @@ def _bulk_upload(user, mid):
                     ex_row = dict(existing) if hasattr(existing, "keys") else \
                               {"stock_id": existing[0], "quantity": existing[1]}
                     conn.execute(
-                        "UPDATE tbl_stat_central_stock SET quantity=quantity+?, last_updated=? WHERE stock_id=?",
+                        "UPDATE tbl_stat_central_stock SET quantity=quantity+?, updated_at=? WHERE stock_id=?",
                         (qty, _ist(), ex_row["stock_id"])
                     )
                 else:
                     conn.execute("""
-                        INSERT INTO tbl_stat_central_stock (item_id, quantity, unit, last_updated)
+                        INSERT INTO tbl_stat_central_stock (item_id, quantity, unit, updated_at)
                         VALUES (?, ?, ?, ?)
                     """, (item["item_id"], qty, item["unit_of_measure"], _ist()))
                 conn.execute("""
@@ -229,7 +229,7 @@ def _issue_to_dept(user, mid):
         try:
             conn = get_conn()
             conn.execute(
-                "UPDATE tbl_stat_central_stock SET quantity=quantity-?, last_updated=? WHERE stock_id=?",
+                "UPDATE tbl_stat_central_stock SET quantity=quantity-?, updated_at=? WHERE stock_id=?",
                 (qty, _ist(), sel_stock["stock_id"])
             )
             dept_existing = conn.execute(
@@ -240,12 +240,12 @@ def _issue_to_dept(user, mid):
                 de = dict(dept_existing) if hasattr(dept_existing, "keys") else \
                      {"dept_stock_id": dept_existing[0], "quantity": dept_existing[1]}
                 conn.execute(
-                    "UPDATE tbl_stat_dept_stock SET quantity=quantity+?, last_updated=? WHERE dept_stock_id=?",
+                    "UPDATE tbl_stat_dept_stock SET quantity=quantity+?, updated_at=? WHERE dept_stock_id=?",
                     (qty, _ist(), de["dept_stock_id"])
                 )
             else:
                 conn.execute("""
-                    INSERT INTO tbl_stat_dept_stock (dept_id, item_id, quantity, unit, last_updated)
+                    INSERT INTO tbl_stat_dept_stock (dept_id, item_id, quantity, unit, updated_at)
                     VALUES (?, ?, ?, ?, ?)
                 """, (dm[to_dept], sel_stock["item_id"], qty, sel_stock["unit"], _ist()))
             conn.execute("""
@@ -277,7 +277,7 @@ def _view_central_stock(mid):
     df = pd.DataFrame([{
         "Item": s["item_name"], "Specification": s.get("specification", "-"),
         "Quantity": s["quantity"], "Unit": s["unit"],
-        "Last Updated": str(s.get("last_updated", ""))[:16],
+        "Last Updated": str(s.get("updated_at", ""))[:16],
     } for s in stock])
     st.dataframe(df, use_container_width=True, hide_index=True)
     total_items = len(stock)
@@ -340,7 +340,7 @@ def _edit_delete_stock(user, mid):
         try:
             conn = get_conn()
             conn.execute(
-                "UPDATE tbl_stat_central_stock SET quantity=?, last_updated=? WHERE stock_id=?",
+                "UPDATE tbl_stat_central_stock SET quantity=?, updated_at=? WHERE stock_id=?",
                 (new_qty, _ist(), sel["stock_id"])
             )
             conn.execute("""
@@ -412,7 +412,7 @@ def _view_dept_stock(dept_id):
     df = pd.DataFrame([{
         "Item": s["item_name"], "Specification": s.get("specification", "-"),
         "Quantity": s["quantity"], "Unit": s["unit"],
-        "Last Updated": str(s.get("last_updated", ""))[:16],
+        "Last Updated": str(s.get("updated_at", ""))[:16],
     } for s in stock])
     st.dataframe(df, use_container_width=True, hide_index=True)
 

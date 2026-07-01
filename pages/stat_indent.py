@@ -156,12 +156,12 @@ def _tab_raise(user, role, mod, mid):
 def _get_role_statuses(role):
     mapping = {
         "HoD":            ["DEPT REVIEW"],
-        "OS":             ["OS REVIEW", "PRINCIPAL REVIEW"],
+        "OS":             ["OS REVIEW", "PRINCIPAL REVIEW", "OS INFORMED"],
         "StatIncharge":   ["STOCK CHECK", "ISSUE PENDING"],
         "Principal":      ["PRINCIPAL DECISION"],
         "JuniorAssistant":["JA CONFIRMATION", "RECEIVED PENDING"],
         "SuperAdmin":     ["DEPT REVIEW","OS REVIEW","STOCK CHECK","PRINCIPAL REVIEW",
-                           "PRINCIPAL DECISION","JA CONFIRMATION","ISSUE PENDING","RECEIVED PENDING"],
+                           "PRINCIPAL DECISION","OS INFORMED","ISSUE PENDING","RECEIVED PENDING"],
     }
     return mapping.get(role, [])
 
@@ -257,7 +257,7 @@ def _indent_detail(indent, user, role, mod, mid):
 
     editable_stock   = (role in ("StatIncharge","SuperAdmin") and status == "STOCK CHECK")
     editable_principal = (role in ("Principal","SuperAdmin") and status == "PRINCIPAL DECISION")
-    editable_ja_confirm = (role in ("JuniorAssistant","SuperAdmin") and status == "JA CONFIRMATION")
+    editable_ja_confirm = False  # JA CONFIRMATION step removed - Principal approval is final
 
     # For stock check — show central stock alongside
     central_stock = _get_central_stock_map() if status in (
@@ -399,16 +399,9 @@ def _indent_detail(indent, user, role, mod, mid):
                             user["user_id"], f"Indent {indent['indent_number']}"
                         )
 
-            # Auto-add to dept stock on RECEIPT ACKNOWLEDGEMENT
-            if next_status == "INDENT CLOSED":
-                from pages.stat_stock import add_dept_stock
-                for ln in lines:
-                    issued = ln.get("issued_qty") or ln.get("approved_qty") or 0
-                    if issued > 0:
-                        add_dept_stock(
-                            ln["item_id"], dept_id, issued, ln["unit"],
-                            indent_id, user["user_id"]
-                        )
+            # Auto-add to dept stock when StatIncharge issues (ISSUE PENDING → RECEIVED PENDING)
+            # (already handled in the RECEIVED PENDING block above via deduct_central_stock)
+            # JA acknowledgement (RECEIVED PENDING → INDENT CLOSED) just closes the indent
 
             conn.execute(
                 "UPDATE tbl_stat_indents SET indent_status=? WHERE indent_id=?",
@@ -454,8 +447,8 @@ def _get_indent_actions(status, role):
         ("OS REVIEW",         "OS"):             {"Forward to Stationery In-charge for Stock Check": "STOCK CHECK"},
         ("STOCK CHECK",       "StatIncharge"):   {"Submit Availability & Forward to OS": "PRINCIPAL REVIEW"},
         ("PRINCIPAL REVIEW",  "OS"):             {"Forward to Principal with Remarks": "PRINCIPAL DECISION"},
-        ("PRINCIPAL DECISION","Principal"):      {"Approve (Full or Partial)": "JA CONFIRMATION", "Reject Indent": "REJECTED", "Send Back for Revision": "DEPT REVIEW"},
-        ("JA CONFIRMATION",   "JuniorAssistant"):{"Confirm Approved Quantities": "ISSUE PENDING"},
+        ("PRINCIPAL DECISION","Principal"):      {"Approve & Notify Office Superintendent": "OS INFORMED", "Reject Indent": "REJECTED", "Send Back for Revision": "DEPT REVIEW"},
+        ("OS INFORMED",       "OS"):             {"Forward to Stationery In-charge for Issue": "ISSUE PENDING"},
         ("ISSUE PENDING",     "StatIncharge"):   {"Issue Items to Department": "RECEIVED PENDING"},
         ("RECEIVED PENDING",  "JuniorAssistant"):{"Acknowledge Receipt": "INDENT CLOSED"},
     }

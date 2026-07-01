@@ -89,9 +89,9 @@ def _render_module_sidebar(module_code, mod, role):
                     unsafe_allow_html=True)
 
             stat_sec("📦", "Stock Register", "#81C784")
-            if role in ("SuperAdmin","SysAdmin"):
+            if role in ("SuperAdmin","SysAdmin","StatIncharge","OS","Principal"):
                 stat_nav("🏛  Central Stock", "stat_central_stock")
-            if role == "JuniorAssistant" or role == "SuperAdmin":
+            if role in ("JuniorAssistant","SuperAdmin","SysAdmin","HoD"):
                 stat_nav("🏢  Department Stock", "stat_dept_stock")
 
             stat_sec("📝", "Indents", "#EF9A9A")

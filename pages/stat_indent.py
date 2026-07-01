@@ -350,15 +350,15 @@ def _indent_detail(indent, user, role, mod, mid):
     st.markdown("### Take Action")
     sel_action = st.selectbox("Select Action", list(actions.keys()), key=f"ia_{indent_id}_{status}")
     next_status = actions[sel_action]
-    comment_req = sel_action in ("Reject Indent", "Send Back for Revision")
     comment = st.text_area(
-        "Comments *" if comment_req else "Comments (optional)",
-        key=f"ic_{indent_id}_{status}", height=70
+        "Comments *",
+        key=f"ic_{indent_id}_{status}", height=70,
+        placeholder="Enter your remarks / comments before proceeding..."
     )
 
     if st.button(sel_action, type="primary", key=f"isub_{indent_id}_{status}"):
-        if comment_req and not comment.strip():
-            st.error("Comments are required for this action.")
+        if not comment.strip():
+            st.error("Comments are mandatory at every step.")
             return
         try:
             conn = get_conn()
@@ -397,6 +397,10 @@ def _indent_detail(indent, user, role, mod, mid):
                         deduct_central_stock(
                             ln["item_id"], issue_qty, dept_id, indent_id,
                             user["user_id"], f"Indent {indent['indent_number']}"
+                        )
+                        add_dept_stock(
+                            ln["item_id"], dept_id, issue_qty, ln["unit"],
+                            indent_id, user["user_id"]
                         )
 
             # Auto-add to dept stock when StatIncharge issues (ISSUE PENDING → RECEIVED PENDING)

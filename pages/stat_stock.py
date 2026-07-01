@@ -117,16 +117,40 @@ def _new_procurement(user, mid):
 
 def _bulk_upload(user, mid):
     st.subheader("Bulk Upload Procurement")
-    template_cols = ["item_name", "quantity", "remarks"]
+    st.caption("Download the pre-filled template, enter quantities only, upload to add stock.")
+    
+    # Generate template with all items pre-filled from database
+    items = [dict(r) for r in _fa(
+        "SELECT item_name, specification, unit_of_measure FROM tbl_stat_items WHERE module_id=? AND is_active=1 ORDER BY item_name",
+        (mid,)
+    )]
+    if items:
+        df_template = pd.DataFrame([{
+            "item_name": it["item_name"],
+            "specification": it.get("specification", ""),
+            "unit": it["unit_of_measure"],
+            "quantity": "",
+            "remarks": ""
+        } for it in items])
+    else:
+        df_template = pd.DataFrame(columns=["item_name","specification","unit","quantity","remarks"])
+    
     buf = io.BytesIO()
-    pd.DataFrame(columns=template_cols).to_excel(buf, index=False, engine="openpyxl")
+    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+        df_template.to_excel(writer, index=False, sheet_name="Procurement")
+        # Auto-fit column widths
+        worksheet = writer.sheets["Procurement"]
+        for col in worksheet.columns:
+            max_len = max(len(str(cell.value or "")) for cell in col) + 4
+            worksheet.column_dimensions[col[0].column_letter].width = min(max_len, 40)
+    
     st.download_button(
-        "Download Excel Template", buf.getvalue(),
+        "Download Pre-filled Template", buf.getvalue(),
         file_name="stat_bulk_upload_template.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         key=f"{mid}_bulk_template"
     )
-    st.caption("item_name must match exactly an existing item in Item Master.")
+    st.info(f"Template has {len(items)} items pre-filled. Enter quantity for items received, leave blank to skip.")
 
     uploaded = st.file_uploader("Choose Excel (.xlsx)", type=["xlsx"], key=f"{mid}_bulk_file")
     if not uploaded:
@@ -149,17 +173,18 @@ def _bulk_upload(user, mid):
         for idx, row in df.iterrows():
             try:
                 item_name = str(row.get("item_name", "")).strip()
-                qty = float(row.get("quantity", 0) or 0)
+                qty_raw = str(row.get("quantity", "")).strip()
+                if not qty_raw or qty_raw == "nan":
+                    continue  # Skip blank rows (pre-filled template rows left empty)
+                qty = float(qty_raw)
                 remarks = str(row.get("remarks", "")).strip()
                 item = items_by_name.get(item_name)
                 if not item:
-                    errors.append(f"Row {idx+2}: item '{item_name}' not found")
+                    errors.append(f"Row {idx+2}: item '{item_name}' not found in Item Master")
                     fail += 1
                     continue
                 if qty <= 0:
-                    errors.append(f"Row {idx+2}: invalid quantity")
-                    fail += 1
-                    continue
+                    continue  # Skip zero quantities silently
                 existing = conn.execute(
                     "SELECT stock_id, quantity FROM tbl_stat_central_stock WHERE item_id=?",
                     (item["item_id"],)
